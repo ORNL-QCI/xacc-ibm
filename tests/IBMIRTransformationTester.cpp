@@ -102,38 +102,10 @@ BOOST_AUTO_TEST_CASE(checkCreation) {
                     ]
                 },
                 {
-                    "gate": "H",
-                    "enabled": true,
-                    "qubits": [
-                        2
-                    ]
-                },
-                {
-                    "gate": "H",
-                    "enabled": true,
-                    "qubits": [
-                        3
-                    ]
-                },
-                {
                     "gate": "CNOT",
                     "enabled": true,
                     "qubits": [
-                        3,
-                        2
-                    ]
-                },
-                {
-                    "gate": "H",
-                    "enabled": true,
-                    "qubits": [
-                        2
-                    ]
-                },
-                {
-                    "gate": "H",
-                    "enabled": true,
-                    "qubits": [
+                        2,
                         3
                     ]
                 },

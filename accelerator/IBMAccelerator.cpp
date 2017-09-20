@@ -163,6 +163,7 @@ void IBMAccelerator::initialize() {
 		backend.nQubits = b["nQubits"].GetInt();
 		backend.name = b["name"].GetString();
 		backend.description = b["description"].GetString();
+		backend.status = !boost::contains(b["status"].GetString(),"off");
 
 		auto isSimulator = b["simulator"].GetBool();
 		if (!isSimulator) {
@@ -173,8 +174,8 @@ void IBMAccelerator::initialize() {
 								couplers[j][1].GetInt()));
 			}
 		}
-		availableBackends.insert(std::make_pair(backend.name, backend));
 
+		availableBackends.insert(std::make_pair(backend.name, backend));
 	}
 }
 
@@ -202,6 +203,18 @@ void IBMAccelerator::execute(std::shared_ptr<AcceleratorBuffer> buffer,
 		// Get the next node in the tree
 		auto nextInst = it.next();
 		if (nextInst->isEnabled()) nextInst->accept(visitor);
+	}
+
+	if (xacc::optionExists("ibm-backend")) {
+		auto newBackend = xacc::getOption("ibm-backend");
+		if (availableBackends.find(newBackend) == availableBackends.end()) {
+			XACCError("Invalid IBM Backend string");
+		}
+		if (!availableBackends[newBackend].status) {
+			XACCError(newBackend + " is currently unavailable, status = off");
+		}
+
+		backend = newBackend;
 	}
 
 	Document d;

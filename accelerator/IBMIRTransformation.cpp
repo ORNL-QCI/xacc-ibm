@@ -11,6 +11,7 @@ std::shared_ptr<IR> IBMIRTransformation::transform(std::shared_ptr<IR> ir) {
 
 	for (auto kernel : ir->getKernels()) {
 
+//		std::cout << "KERNEL BEFORE:\n" << kernel->toString("qreg") << "\n\n";
 		currentKernelInstructionIdx = 0;
 
 		InstructionIterator it(kernel);
@@ -39,8 +40,11 @@ std::shared_ptr<IR> IBMIRTransformation::transform(std::shared_ptr<IR> ir) {
 
 		}
 
+//		std::cout << "KERNEL AFTER:\n" << kernel->toString("qreg") << "\n";
+
 		newir->addKernel(kernel);
 	}
+
 
 	return newir;
 }
@@ -75,7 +79,12 @@ void IBMIRTransformation::visit(CNOT& cnot) {
 }
 
 bool IBMIRTransformation::isCouplingAvailable(const int src, const int tgt) {
-	return tgt == _couplers[src].first || tgt == _couplers[src].second;
+	for (auto c : _couplers) {
+		if (c.first == src && c.second == tgt) {
+			return true;
+		}
+	}
+	return false; //tgt == _couplers[src].first || tgt == _couplers[src].second;
 }
 
 }

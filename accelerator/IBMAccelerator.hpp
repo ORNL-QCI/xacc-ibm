@@ -54,6 +54,7 @@ struct IBMBackend {
 	std::string description;
 	int nQubits;
 	std::vector<std::pair<int,int>> couplers;
+	bool status = true;
 };
 
 /**
@@ -141,7 +142,7 @@ public:
 		if (map.count("ibm-list-backends")) {
 			initialize();
 			for (auto s : availableBackends) {
-				XACCInfo("Available IBM Backend: " + std::string(s.first));
+				XACCInfo("Available IBM Backend: " + std::string(s.first) + " [" + (s.second.status ? "on" : "off") + "]");
 			}
 			return true;
 		}
