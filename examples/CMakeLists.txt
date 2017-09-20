@@ -28,17 +28,15 @@
 #   Initial API and implementation - Alex McCaskey
 #
 #**********************************************************************************/
-if (TARGET xacc-scaffold)
-   add_executable(teleport_scaffold_ibm teleport_scaffold_ibm.cpp)
-   target_link_libraries(teleport_scaffold_ibm ${Boost_LIBRARIES} xacc CppMicroServices dl)
+add_executable(teleport_scaffold_ibm teleport_scaffold_ibm.cpp)
+target_link_libraries(teleport_scaffold_ibm ${Boost_LIBRARIES} xacc CppMicroServices dl)
    
-   add_executable(qft_scaffold_ibm qft_scaffold_ibm.cpp)
-   target_link_libraries(qft_scaffold_ibm ${Boost_LIBRARIES} xacc CppMicroServices dl)
+add_executable(qft_scaffold_ibm qft_scaffold_ibm.cpp)
+target_link_libraries(qft_scaffold_ibm ${Boost_LIBRARIES} xacc CppMicroServices dl)
    
-   add_executable(h2_exp_vals_scaffold_ibm h2_exp_vals_scaffold_ibm.cpp)
-   target_link_libraries(h2_exp_vals_scaffold_ibm ${Boost_LIBRARIES} xacc CppMicroServices dl)
+add_executable(h2_exp_vals_scaffold_ibm h2_exp_vals_scaffold_ibm.cpp)
+target_link_libraries(h2_exp_vals_scaffold_ibm ${Boost_LIBRARIES} xacc CppMicroServices dl)
    
-   install(TARGETS teleport_scaffold_ibm DESTINATION examples)
-   
-   install(TARGETS h2_exp_vals_scaffold_ibm DESTINATION examples)
-endif()
+install(TARGETS teleport_scaffold_ibm DESTINATION examples)
+  
+install(TARGETS h2_exp_vals_scaffold_ibm DESTINATION examples)
