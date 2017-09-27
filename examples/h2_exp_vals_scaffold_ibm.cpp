@@ -112,6 +112,7 @@ int main (int argc, char** argv) {
 			kernels[i](qubitReg, theta);
 			std::cout << "Done Executing Kernel " << i << "\n";
 			auto e = qubitReg->getExpectationValueZ();
+			std::cout << "EXP VAL IS " << e << "\n";
 			qubitReg->resetBuffer();
 			file << e;
 		}

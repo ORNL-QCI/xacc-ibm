@@ -165,8 +165,8 @@ void IBMAccelerator::initialize() {
 		backend.description = b["description"].GetString();
 		backend.status = !boost::contains(b["status"].GetString(),"off");
 
-		auto isSimulator = b["simulator"].GetBool();
-		if (!isSimulator) {
+		backend.isSimulator = b["simulator"].GetBool();
+		if (!backend.isSimulator) {
 			auto couplers = b["couplingMap"].GetArray();
 			for (int j = 0; j < couplers.Size(); j++) {
 				backend.couplers.push_back(
@@ -186,7 +186,8 @@ void IBMAccelerator::execute(std::shared_ptr<AcceleratorBuffer> buffer,
 	// Get the runtime options map, and initialize
 	// some basic variables we are going to need
 	auto options = RuntimeOptions::instance();
-	std::string backend = "ibmqx_qasm_simulator";
+	std::string backendName = "ibmqx_qasm_simulator";
+	IBMBackend backend;
 	std::string jsonStr = "";
 	std::string shots = "1024";
 	std::map<std::string, std::string> headers;
@@ -214,18 +215,18 @@ void IBMAccelerator::execute(std::shared_ptr<AcceleratorBuffer> buffer,
 			XACCError(newBackend + " is currently unavailable, status = off");
 		}
 
-		backend = newBackend;
+		backendName = newBackend;
+		backend = availableBackends[backendName];
 	}
 
 	Document d;
 	auto qasmStr = visitor->getOpenQasmString();
 	boost::replace_all(qasmStr, "\n", "\\n");
-	jsonStr = "{\"qasms\": [{\"qasm\": \"" + qasmStr + "\"}], \"shots\": "+shots+", \"maxCredits\": 3, \"backend\": {\"name\": \""+backend+"\"}}";
+	jsonStr = "{\"qasms\": [{\"qasm\": \"" + qasmStr + "\"}], \"shots\": "+shots+", \"maxCredits\": 3, \"backend\": {\"name\": \""+backendName+"\"}}";
 
 	// Set up the extra HTTP headers we are going to need
 	headers.insert(std::make_pair("Content-type", "application/json"));
 	headers.insert(std::make_pair("Connection", "keep-alive"));
-	headers.insert(std::make_pair("Accept-Encoding", "gzip, deflate"));
 	headers.insert(std::make_pair("Accept", "*/*"));
 
 	// Create the URI, HTTP Client and Post and Get request
@@ -267,60 +268,130 @@ void IBMAccelerator::execute(std::shared_ptr<AcceleratorBuffer> buffer,
 
 	// Get the JobID
 	std::string jobId = std::string(d["id"].GetString());
+	std::string executionId = std::string(d["qasms"][0]["executionId"].GetString());
+	std::cout << "EXECUTION ID IS: " << executionId << "\n";
 
-	// Create a client to execute HTTP Get requests
-	http_client getClient(
-			http::uri_builder(uri).append_path(
-					U("/api/Jobs/" + jobId + "?access_token=" + currentApiToken)).to_uri());
+	if (backend.isSimulator) {
+		// Create a client to execute HTTP Get requests
+		http_client getClient(
+				http::uri_builder(uri).append_path(
+						U(
+								"/api/Jobs/" + jobId + "?access_token="
+										+ currentApiToken)).to_uri());
 
-	// Loop until the job is complete,
-	// get the JSON response
-	std::string msg;
-	bool jobCompleted = false;
-	while (!jobCompleted) {
+		// Loop until the job is complete,
+		// get the JSON response
+		std::string msg;
+		bool jobCompleted = false;
+		while (!jobCompleted) {
 
-		// Execute HTTP Get
-		auto getResponse = getClient.request(getRequest);
+			// Execute HTTP Get
+			auto getResponse = getClient.request(getRequest);
 
-		// get the result as a string
+			// get the result as a string
+			std::stringstream z;
+			z << getResponse.get().extract_json().get();
+			msg = z.str();
+
+			// Search the result for the status : COMPLETED indicator
+			if (boost::contains(msg, "COMPLETED")) {
+				jobCompleted = true;
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		std::cout << "LAST MSG:\n" << msg << "\n";
+
+		d.Parse(msg);
+		const Value& counts = d["qasms"][0]["result"]["data"]["counts"];
+		for (Value::ConstMemberIterator itr = counts.MemberBegin();
+				itr != counts.MemberEnd(); ++itr) {
+			std::cout << "VAL: " << itr->value.GetInt() << "\n";
+
+			// NOTE THESE BITS ARE LEFT MOST IS MOST SIGNIFICANT,
+			// LEFT MOST IS (N-1)th Qubit, RIGHT MOST IS 0th qubit
+			std::string bitStr = itr->name.GetString();
+			std::vector<std::string> bits;
+			boost::split(bits, bitStr, boost::is_any_of(" "));
+			boost::dynamic_bitset<> outcome(buffer->size());
+			for (int i = 0; i < bits.size(); i++) {
+				outcome[i] = std::stoi(bits[i]);
+			}
+
+			std::cout << "OUTCOME: " << outcome << "\n";
+
+			int nOccurrences = itr->value.GetInt();
+			for (int i = 0; i < nOccurrences; i++) {
+				buffer->appendMeasurement(outcome);
+			}
+		}
+
+	} else {
+
+		std::cout << "RUnning on physical QPU\n";
+		http_client getExecutionClient(
+				http::uri_builder(uri).append_path(
+						U("/api/Executions/" + executionId+"?access_token="+currentApiToken)).to_uri());
+
+		http_client getClient(
+				http::uri_builder(uri).append_path(
+						U(
+								"/api/Jobs/" + jobId + "?access_token="
+										+ currentApiToken)).to_uri());
+
+		// Loop until the job is complete,
+		// get the JSON response
+		std::string msg;
+		bool jobCompleted = false;
+		while (!jobCompleted) {
+
+			// Execute HTTP Get
+			auto getResponse = getClient.request(getRequest);
+
+			// get the result as a string
+			std::stringstream z;
+			z << getResponse.get().extract_string().get();
+			msg = z.str();
+
+			std::cout << "Physical Msg:\n" << msg << "\n";
+			// Search the result for the status : COMPLETED indicator
+			if (boost::contains(msg, "COMPLETED")
+					|| !boost::contains(msg, "status")) {
+				jobCompleted = true;
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		std::cout << "LAST Physical MSG:\n" << msg << "\n";
+
+		auto getResponse = getExecutionClient.request(getRequest);
+
 		std::stringstream z;
-		z << getResponse.get().extract_json().get();
+		z << getResponse.get().extract_string().get();
+
 		msg = z.str();
 
-		// Search the result for the status : COMPLETED indicator
-		if (boost::contains(msg, "COMPLETED")) {
-			jobCompleted = true;
-		}
+		std::cout << "EXECUTIONID RESPONSE:\n" << msg << "\n";
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
+		d.Parse(msg);
 
-	std::cout << "LAST MSG:\n" << msg << "\n";
+		const Value& labels = d["result"]["data"]["p"]["labels"];
+		auto lArr = labels.GetArray();
+		const Value& values = d["result"]["data"]["p"]["values"];
+		auto valArr = values.GetArray();
 
-	d.Parse(msg);
-	const Value& counts = d["qasms"][0]["result"]["data"]["counts"];
-	for (Value::ConstMemberIterator itr = counts.MemberBegin();
-			itr != counts.MemberEnd(); ++itr) {
-		std::cout << "VAL: " << itr->value.GetInt() << "\n";
-
-		// NOTE THESE BITS ARE LEFT MOST IS MOST SIGNIFICANT,
-		// LEFT MOST IS (N-1)th Qubit, RIGHT MOST IS 0th qubit
-		std::string bitStr = itr->name.GetString();
-		std::vector<std::string> bits;
-		boost::split(bits, bitStr, boost::is_any_of(" "));
-		boost::dynamic_bitset<> outcome(buffer->size());
-		for (int i = 0; i < bits.size(); i++) {
-			outcome[i] = std::stoi(bits[i]);
-		}
-
-		std::cout << "OUTCOME: " << outcome << "\n";
-
-		int nOccurrences = itr->value.GetInt();
-		for (int i = 0; i < nOccurrences; i++) {
-			buffer->appendMeasurement(outcome);
+		std::vector<std::string> labelsVec;
+		for (int i = 0; i < labels.Size(); i++) {
+			std::cout << "VAL: " << lArr[i].GetString() << ", " << valArr[i].GetDouble() << "\n";
+			int nCount = valArr[i].GetDouble() * std::stoi(shots);
+			boost::dynamic_bitset<> outcome(std::string(lArr[i].GetString()));
+			for (int i = 0; i < nCount; i++) {
+				buffer->appendMeasurement(outcome);
+			}
 		}
 	}
-
 }
 
 std::shared_ptr<AcceleratorGraph> IBMAccelerator::getAcceleratorConnectivity() {

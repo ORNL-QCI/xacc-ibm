@@ -55,6 +55,7 @@ struct IBMBackend {
 	int nQubits;
 	std::vector<std::pair<int,int>> couplers;
 	bool status = true;
+	bool isSimulator = true;
 };
 
 /**
