@@ -38,6 +38,14 @@
 #include <boost/filesystem.hpp>
 #include "OpenQasmVisitor.hpp"
 
+
+#define RAPIDJSON_HAS_STDSTRING 1
+
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/document.h"
+
+using namespace rapidjson;
+
 using namespace xacc;
 
 namespace xacc {
@@ -82,11 +90,32 @@ public:
 	std::shared_ptr<AcceleratorBuffer> createBuffer(const std::string& varId,
 			const int size);
 
+	/**
+	 * Create, store, and return an AcceleratorBuffer with the given
+	 * variable id string. This method returns all available
+	 * qubits for this Accelerator. The string id serves as a unique identifier
+	 * for future lookups and reuse of the AcceleratorBuffer.
+	 *
+	 * @param varId The variable name of the created buffer
+	 * @return buffer The buffer instance created.
+	 */
 	virtual std::shared_ptr<AcceleratorBuffer> createBuffer(
 				const std::string& varId);
 
+	/**
+	 * Initialize this Accelerator. This method is called
+	 * by the XACC framework after an Accelerator has been
+	 * requested and created. Perform any work you need
+	 * done before execution here.
+	 *
+	 */
 	virtual void initialize();
 
+	/**
+	 * Return the graph structure for this Accelerator.
+	 *
+	 * @return connectivityGraph The graph structure of this Accelerator
+	 */
 	virtual std::shared_ptr<AcceleratorGraph> getAcceleratorConnectivity();
 
 	/**
@@ -98,13 +127,27 @@ public:
 	virtual bool isValidBufferSize(const int NBits);
 
 	/**
-	 * Execute the kernel on the provided AcceleratorBuffer through a
-	 * HTTP Post of Quil instructions to the IBM QPU at api.IBM.com/qvm
+	 * Execute the provided XACC IR Function on the provided AcceleratorBuffer.
 	 *
-	 * @param ir
+	 * @param buffer The buffer of bits this Accelerator should operate on.
+	 * @param function The kernel to execute.
 	 */
 	virtual void execute(std::shared_ptr<AcceleratorBuffer> buffer,
 			const std::shared_ptr<xacc::Function> kernel);
+
+	/**
+	 * Execute a set of kernels with one remote call. Return
+	 * a list of AcceleratorBuffers that provide a new view
+	 * of the given one AcceleratorBuffer. The ith AcceleratorBuffer
+	 * contains the results of the ith kernel execution.
+	 *
+	 * @param buffer The AcceleratorBuffer to execute on
+	 * @param functions The list of IR Functions to execute
+	 * @return tempBuffers The list of new AcceleratorBuffers
+	 */
+	virtual std::vector<std::shared_ptr<AcceleratorBuffer>> execute(
+			std::shared_ptr<AcceleratorBuffer> buffer,
+			const std::vector<std::shared_ptr<Function>> functions);
 
 	/**
 	 * This Accelerator models QPU Gate accelerators.
@@ -139,26 +182,44 @@ public:
 		return desc;
 	}
 
+	/**
+	 * Given user-input command line options, perform
+	 * some operation. Returns true if runtime should exit,
+	 * false otherwise.
+	 *
+	 * @param map The mapping of options to values
+	 * @return exit True if exit, false otherwise
+	 */
 	virtual bool handleOptions(variables_map& map) {
 		if (map.count("ibm-list-backends")) {
 			initialize();
 			for (auto s : availableBackends) {
-				XACCInfo("Available IBM Backend: " + std::string(s.first) + " [" + (s.second.status ? "on" : "off") + "]");
+				XACCInfo("Available IBM Backend: " +
+						std::string(s.first) + " [" +
+						(s.second.status ? "on" : "off")
+						+ "]");
 			}
 			return true;
 		}
 		return false;
 	}
 
-	IBMAccelerator() {
-	}
-
+	/**
+	 * Return the name of this instance.
+	 *
+	 * @return name The string name
+	 */
 	virtual const std::string name() const {
 		return "ibm";
 	}
 
+	/**
+	 * Return the description of this instance
+	 * @return description The description of this object.
+	 */
 	virtual const std::string description() const {
-		return "The IBM Accelerator interacts...";
+		return "The IBM Accelerator interacts with the remote IBM "
+				"Quantum Experience to launch XACC quantum kernels.";
 	}
 
 	/**
@@ -181,10 +242,27 @@ private:
 	 */
 	void findApiKeyInFile(std::string& key, std::string& url, boost::filesystem::path &p);
 
+	/**
+	 * Private utility method that takes the given JSON string
+	 * and posts it to the IBM Quantum Experience.
+	 */
+	Document postJob(const std::string jsonStr);
+
+	/**
+	 * Reference to the temporary API Token for
+	 * this IBM Quantum Experience session.
+	 */
 	std::string currentApiToken;
 
+	/**
+	 * The IBM Quantum Experience URL
+	 */
 	std::string url;
 
+	/**
+	 * Mapping of available backend name to an actual
+	 * IBMBackend struct data structure.
+	 */
 	std::map<std::string, IBMBackend> availableBackends;
 
 };
