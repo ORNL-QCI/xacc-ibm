@@ -19,6 +19,10 @@ include(CppMicroServicesConfig)
 
 find_package(Boost COMPONENTS system program_options filesystem chrono thread REQUIRED)
 
+configure_file("${CMAKE_SOURCE_DIR}/cmake/xacc-ibm-config.hpp.in" "${CMAKE_BINARY_DIR}/xacc-ibm-config.hpp")
+
+include_directories(${CMAKE_BINARY_DIR})
+
 include_directories(${XACC_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${XACC_ROOT}/include/rapidjson/include)

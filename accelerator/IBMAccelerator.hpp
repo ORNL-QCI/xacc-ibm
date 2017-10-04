@@ -31,13 +31,13 @@
 #ifndef QUANTUM_GATE_ACCELERATORS_IBMACCELERATOR_HPP_
 #define QUANTUM_GATE_ACCELERATORS_IBMACCELERATOR_HPP_
 
-#include "Accelerator.hpp"
+#include "RemoteAccelerator.hpp"
 #include "InstructionIterator.hpp"
 #include "RuntimeOptions.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include "OpenQasmVisitor.hpp"
-
+#include "IBMIRTransformation.hpp"
 
 #define RAPIDJSON_HAS_STDSTRING 1
 
@@ -74,7 +74,7 @@ struct IBMBackend {
  * through Fire's HTTP Client utilities.
  *
  */
-class IBMAccelerator : virtual public Accelerator {
+class IBMAccelerator : public RemoteAccelerator {
 public:
 
 	/**
@@ -127,29 +127,6 @@ public:
 	virtual bool isValidBufferSize(const int NBits);
 
 	/**
-	 * Execute the provided XACC IR Function on the provided AcceleratorBuffer.
-	 *
-	 * @param buffer The buffer of bits this Accelerator should operate on.
-	 * @param function The kernel to execute.
-	 */
-	virtual void execute(std::shared_ptr<AcceleratorBuffer> buffer,
-			const std::shared_ptr<xacc::Function> kernel);
-
-	/**
-	 * Execute a set of kernels with one remote call. Return
-	 * a list of AcceleratorBuffers that provide a new view
-	 * of the given one AcceleratorBuffer. The ith AcceleratorBuffer
-	 * contains the results of the ith kernel execution.
-	 *
-	 * @param buffer The AcceleratorBuffer to execute on
-	 * @param functions The list of IR Functions to execute
-	 * @return tempBuffers The list of new AcceleratorBuffers
-	 */
-	virtual std::vector<std::shared_ptr<AcceleratorBuffer>> execute(
-			std::shared_ptr<AcceleratorBuffer> buffer,
-			const std::vector<std::shared_ptr<Function>> functions);
-
-	/**
 	 * This Accelerator models QPU Gate accelerators.
 	 * @return
 	 */
@@ -171,7 +148,7 @@ public:
 	 */
 	virtual std::shared_ptr<options_description> getOptions() {
 		auto desc = std::make_shared<options_description>(
-				"IBM Accelerator Options");
+				"New IBM Accelerator Options");
 		desc->add_options()("ibm-api-key", value<std::string>(),
 				"Provide the IBM API key. This is used if $HOME/.ibm_config is not found")("ibm-backend",
 				value<std::string>(),
@@ -194,7 +171,7 @@ public:
 		if (map.count("ibm-list-backends")) {
 			initialize();
 			for (auto s : availableBackends) {
-				XACCInfo("Available IBM Backend: " +
+				XACCInfo("Available New IBM Backend: " +
 						std::string(s.first) + " [" +
 						(s.second.status ? "on" : "off")
 						+ "]");
@@ -223,6 +200,24 @@ public:
 	}
 
 	/**
+	 * take ir, generate json post string
+	 */
+	virtual const std::string processInput(
+			std::shared_ptr<AcceleratorBuffer> buffer,
+			std::vector<std::shared_ptr<Function>> functions);
+
+	/**
+	 * take response and create
+	 */
+	virtual std::vector<std::shared_ptr<AcceleratorBuffer>> processResponse(
+			std::shared_ptr<AcceleratorBuffer> buffer,
+			const std::string& response);
+
+	IBMAccelerator() :RemoteAccelerator() {}
+
+	IBMAccelerator(std::shared_ptr<RestClient> client) : RemoteAccelerator(client) {}
+
+	/**
 	 * The destructor
 	 */
 	virtual ~IBMAccelerator() {}
@@ -243,12 +238,6 @@ private:
 	void findApiKeyInFile(std::string& key, std::string& url, boost::filesystem::path &p);
 
 	/**
-	 * Private utility method that takes the given JSON string
-	 * and posts it to the IBM Quantum Experience.
-	 */
-	Document postJob(const std::string jsonStr);
-
-	/**
 	 * Reference to the temporary API Token for
 	 * this IBM Quantum Experience session.
 	 */
@@ -264,6 +253,8 @@ private:
 	 * IBMBackend struct data structure.
 	 */
 	std::map<std::string, IBMBackend> availableBackends;
+
+	IBMBackend chosenBackend;
 
 };
 

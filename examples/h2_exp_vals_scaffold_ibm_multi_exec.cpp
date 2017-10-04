@@ -97,24 +97,18 @@ int main (int argc, char** argv) {
 	// Create a Program
 	xacc::Program program(qpu, src);
 	program.build();
+	auto numberOfKernels = program.nKernels();
+
 	// Request the quantum kernel representing
 	// the above source code
-	auto kernels = program.getKernels<float>();
-	for (float theta = -pi; theta <= pi; theta += .2) {
+	auto hamiltonianTermKernels = program.getKernels<float>(1, numberOfKernels);
 
+	for (float theta = -pi; theta <= pi; theta += .4) {
 		file << theta;
-
-		// Skip the first kernel, it is the state prep
-		// kernel that all others will call anyway
-		for (int i = 1; i < kernels.size(); i++) {
+		auto tempBuffers = hamiltonianTermKernels(qubitReg, theta);
+		for (auto buffer : tempBuffers) {
 			file << ", ";
-			std::cout << "Executing Kernel " << i << "\n";
-			kernels[i](qubitReg, theta);
-			std::cout << "Done Executing Kernel " << i << "\n";
-			auto e = qubitReg->getExpectationValueZ();
-			std::cout << "EXP VAL IS " << e << "\n";
-			qubitReg->resetBuffer();
-			file << e;
+			file << buffer->getExpectationValueZ();
 		}
 		file << "\n";
 		file.flush();
