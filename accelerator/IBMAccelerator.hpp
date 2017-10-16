@@ -154,7 +154,8 @@ public:
 				value<std::string>(),
 				"Provide the backend name.")
 				("ibm-shots", value<std::string>(), "Provide the number of shots to execute.")
-				("ibm-list-backends", "List the available backends at the IBM Quantum Experience URL.");
+				("ibm-list-backends", "List the available backends at the IBM Quantum Experience URL.")
+				("ibm-api-url", "");
 
 		return desc;
 	}

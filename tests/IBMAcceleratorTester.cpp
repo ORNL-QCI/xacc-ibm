@@ -35,6 +35,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include "IBMAccelerator.hpp"
 #include "xacc-ibm-config.hpp"
+#include "XACC.hpp"
 
 using namespace xacc::quantum;
 
@@ -90,6 +91,9 @@ const std::string fakePostResultSim = R"fakePostResults({"qasms":[{"qasm":"\ninc
 const std::string fakeGetResultsSim = R"fakeGetResults({"backend":{"name":"ibmqx_qasm_simulator"},"calibration":{},"creationDate":"2017-10-04T16:49:02.376Z","deleted":false,"id":"fd386cfd16b707b6f5d8ece36d6f7c3b","maxCredits":3,"qasms":[{"executionId":"a66ff99b6e44a916ed3a6c7579ee0f06","qasm":"\ninclude \"qelib1.inc\";\nqreg q[3];\nx q[0];\nh q[1];\ncx q[1], q[2];\ncx q[0], q[1];\nh q[0];\ncreg c0[1];\nmeasure q[0] -> c0[0];\ncreg c1[1];\nmeasure q[1] -> c1[0];\nif (c0 == 1) z q[2];\nif (c1 == 1) x q[2];\ncreg c2[1];\nmeasure q[2] -> c2[0];\n","result":{"data":{"additionalData":{"seed":2842128583},"counts":{"1 0 0":263,"1 0 1":267,"1 1 0":241,"1 1 1":253},"creg_labels":"c2[1] c1[1] c0[1]","time":0.042070099999999999},"date":"2017-10-04T16:49:02.809Z"},"status":"DONE"}],"shots":1024,"status":"COMPLETED","usedCredits":0,"userId":"12074c90bb6425be346c55a1f1318a03"})fakeGetResults";
 
 BOOST_AUTO_TEST_CASE(checkKernelSimExecution) {
+        xacc::Initialize();
+        xacc::setOption("ibm-api-key", "hello");
+        xacc::setOption("ibm-api-url", "hello");
 
 	auto fakeClient = std::make_shared<FakeRestClient>(fakeLogin, fakeBackends,
 			fakePostResultSim, fakeGetResultsSim);
@@ -129,11 +133,16 @@ BOOST_AUTO_TEST_CASE(checkKernelSimExecution) {
 
 	acc.execute(buffer, f);
 
+	xacc::Finalize();
 }
 
 BOOST_AUTO_TEST_CASE(checkKernelPhysicalExecution) {
 
-	std::ifstream t(std::string(XACC_IBM_SOURCE_DIR) + "/tests/files/fakePostResponsePhysical.json");
+        xacc::Initialize();
+        xacc::setOption("ibm-api-key", "hello");
+        xacc::setOption("ibm-api-url", "hello");
+	
+ 	std::ifstream t(std::string(XACC_IBM_SOURCE_DIR) + "/tests/files/fakePostResponsePhysical.json");
 	std::ifstream t2(std::string(XACC_IBM_SOURCE_DIR) + "/tests/files/fakeGetResultsPhysical.json");
 
 	std::stringstream buffer, buffer2;
@@ -150,5 +159,8 @@ BOOST_AUTO_TEST_CASE(checkKernelPhysicalExecution) {
 	auto qbits = acc.createBuffer("qubits", 2);
 
 	acc.execute(qbits, f);
+
+        xacc::Finalize();
+
 }
 
