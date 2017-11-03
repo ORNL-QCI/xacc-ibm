@@ -179,6 +179,10 @@ const std::string IBMAccelerator::processInput(
 		chosenBackend = availableBackends[backendName];
 	}
 
+	if (xacc::optionExists("ibm-shots")) {
+		shots = xacc::getOption("ibm-shots");
+	}
+
 	for (auto kernel : functions) {
 		// Create the Instruction Visitor that is going
 		// to map our IR to Quil.
@@ -201,10 +205,11 @@ const std::string IBMAccelerator::processInput(
 		boost::replace_all(qasmStr, "\n", "\\n");
 
 		jsonStr += "{\"qasm\": \"" + qasmStr + "\"},";
+		std::cout << "OpenQasm:\n" << qasmStr << "\n";
 	}
 
 	jsonStr = jsonStr.substr(0, jsonStr.size()-1) + "]";
-	jsonStr += ", \"shots\": "+shots+", \"maxCredits\": 3, "
+	jsonStr += ", \"shots\": "+shots+", \"maxCredits\": 5, "
 			"\"backend\": {\"name\": \""+ backendName +"\"}}";
 
 	return jsonStr;
@@ -218,6 +223,9 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 		std::shared_ptr<AcceleratorBuffer> buffer,
 		const std::string& response) {
 
+	if (boost::contains(response, "error")) {
+		std::cout << response << "\n";
+	}
 	Document d;
 	d.Parse(response);
 	std::string jobId = std::string(d["id"].GetString());
@@ -242,11 +250,22 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 
 		Document d;
 		d.Parse(getResponse);
-		std::cout << "Job Response:\n" << d["status"].GetString() << "\n";
+		if (d.HasMember("infoQueue")) {
+			auto info = d["infoQueue"].GetObject();
+			std::cout << "\r" << "Job Response: " << d["status"].GetString()
+					<< ", queue: " << d["infoQueue"]["status"].GetString();
+			if (info.HasMember("position")) {
+				std::cout << " position " << d["infoQueue"]["position"].GetInt()
+						<< std::flush;
+			}
+		} else {
+			std::cout << "\r" << "Job Response: " << d["status"].GetString()
+					<< std::flush;
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 
-	std::cout << "LAST MSG:\n" << getResponse << "\n";
+	std::cout << std::endl;
 
 	d.Parse(getResponse);
 
@@ -259,14 +278,16 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 			// NOTE THESE BITS ARE LEFT MOST IS MOST SIGNIFICANT,
 			// LEFT MOST IS (N-1)th Qubit, RIGHT MOST IS 0th qubit
 			std::string bitStr = itr->name.GetString();
+			int nOccurrences = itr->value.GetInt();
 			if (chosenBackend.isSimulator) {
 				boost::replace_all(bitStr, " ", "");
-				std::cout << "BITSTRING IS " << bitStr << "\n";
+			} else {
+				bitStr = bitStr.substr(bitStr.length()-buffer->size(), bitStr.length());
 			}
-
 			boost::dynamic_bitset<> outcome(bitStr);
-			std::cout << "OUTCOME: " << outcome << "\n";
-			int nOccurrences = itr->value.GetInt();
+			std::stringstream xx;
+			xx << outcome << " " << nOccurrences << " times";
+			XACCInfo("IBM Measurement outcome: " + xx.str() +".");
 			for (int i = 0; i < nOccurrences; i++) {
 				buffer->appendMeasurement(outcome);
 			}
