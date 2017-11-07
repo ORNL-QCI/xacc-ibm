@@ -89,11 +89,19 @@ std::vector<std::shared_ptr<IRTransformation>> IBMAccelerator::getIRTransformati
 
 	auto backend = availableBackends[backendName];
 
-	if (!backend.couplers.empty()) {
-		auto transform = std::make_shared<IBMIRTransformation>(
-				backend.couplers);
-		transformations.push_back(transform);
+	std::vector<std::pair<int,int>> testCouplers;
+	for (auto b : availableBackends) {
+		if (b.first == "ibmqx5") {
+			testCouplers = b.second.couplers;
+			break;
+		}
 	}
+
+//	if (!backend.couplers.empty()) {
+		auto transform = std::make_shared<IBMIRTransformation>(
+				testCouplers);
+		transformations.push_back(transform);
+//	}
 	return transformations;
 }
 
@@ -150,6 +158,20 @@ void IBMAccelerator::initialize() {
 	remoteUrl = url;
 }
 
+bool IBMAccelerator::isPhysical() {
+	std::string backendName = "ibmqx_qasm_simulator";
+	if (xacc::optionExists("ibm-backend")) {
+		auto newBackend = xacc::getOption("ibm-backend");
+		if (availableBackends.find(newBackend) == availableBackends.end()) {
+			XACCError("Invalid IBM Backend string");
+		}
+		backendName = newBackend;
+		return !availableBackends[backendName].isSimulator;
+	} else {
+		return false;
+	}
+}
+
 /**
  * take ir, generate json post string
  */
@@ -183,6 +205,7 @@ const std::string IBMAccelerator::processInput(
 		shots = xacc::getOption("ibm-shots");
 	}
 
+	int kernelCounter = 0;
 	for (auto kernel : functions) {
 		// Create the Instruction Visitor that is going
 		// to map our IR to Quil.
@@ -192,20 +215,33 @@ const std::string IBMAccelerator::processInput(
 		// so create a pre-order tree traversal
 		// InstructionIterator to walk it
 		InstructionIterator it(kernel);
+		measurementSupports.insert(std::make_pair(kernelCounter, std::vector<int>{}));
 		while (it.hasNext()) {
 			// Get the next node in the tree
 			auto nextInst = it.next();
-			if (nextInst->isEnabled())
+			if (nextInst->isEnabled()) {
 				nextInst->accept(visitor);
+				if (nextInst->getName() == "Measure") {
+					auto qbitIdx = nextInst->bits()[0];
+					measurementSupports[kernelCounter].push_back(qbitIdx);
+				}
+			}
 		}
-
-
 
 		auto qasmStr = visitor->getOpenQasmString();
 		boost::replace_all(qasmStr, "\n", "\\n");
 
 		jsonStr += "{\"qasm\": \"" + qasmStr + "\"},";
-		std::cout << "OpenQasm:\n" << qasmStr << "\n";
+
+		if(xacc::optionExists("ibm-write-openqasm")) {
+			auto dir = xacc::getOption("ibm-write-openqasm");
+			boost::replace_all(qasmStr, "\\n", "\n");
+			std::ofstream out(kernel->getName() + ".openqasm");
+			out << qasmStr;
+			out.close();
+		}
+
+		kernelCounter++;
 	}
 
 	jsonStr = jsonStr.substr(0, jsonStr.size()-1) + "]";
@@ -224,7 +260,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 		const std::string& response) {
 
 	if (boost::contains(response, "error")) {
-		std::cout << response << "\n";
+		XACCError( response );
 	}
 	Document d;
 	d.Parse(response);
@@ -267,6 +303,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 
 	std::cout << std::endl;
 
+//	XACCInfo(getResponse);
 	d.Parse(getResponse);
 
 	auto qasmsArray = d["qasms"].GetArray();
@@ -301,6 +338,14 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 
 		for (SizeType i = 0; i < qasmsArray.Size(); i++) {
 
+			XACCInfo("--------------------------");
+			XACCInfo("Kernel " + std::to_string(i));
+			std::stringstream sss;
+			for (auto q : measurementSupports[i]) {
+				sss << q << ", ";
+			}
+			XACCInfo("Measured Qubits: " + sss.str());
+
 			auto tmpBuffer = createBuffer(buffer->name() + std::to_string(i),
 					buffer->size());
 
@@ -313,7 +358,6 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 				std::string bitStr = itr->name.GetString();
 				if (chosenBackend.isSimulator) {
 					boost::replace_all(bitStr, " ", "");
-					std::cout << "BITSTRING IS " << bitStr << "\n";
 				}
 
 				if (!chosenBackend.isSimulator) {
@@ -321,20 +365,34 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 						bitStr = bitStr.substr(bitStr.length() - buffer->size(),
 								bitStr.length());
 					}
+
+					// Turn off measure results that didn't have
+					// a requested measurement gate, otherwise our
+					// expectation values will be skewed.
+					auto supportedQbits = measurementSupports[i];
+					int counter = 0;
+					for (int i = bitStr.length()-1; i >= 0; i--) {
+						if (std::find(supportedQbits.begin(), supportedQbits.end(), counter) == supportedQbits.end()) {
+							bitStr[i] = '0';
+						}
+						counter++;
+					}
 				}
 
+				XACCInfo("IBM Results: " + std::string(itr->name.GetString()) + ":" + std::to_string(itr->value.GetInt()));
 				boost::dynamic_bitset<> outcome(bitStr);
-				std::cout << "Result: " << outcome << ": " << itr->value.GetInt() << "\n";
 				int nOccurrences = itr->value.GetInt();
 				for (int i = 0; i < nOccurrences; i++) {
 					tmpBuffer->appendMeasurement(outcome);
 				}
-
 			}
+
+			XACCInfo("--------------------------");
 
 			buffers.push_back(tmpBuffer);
 		}
 
+		measurementSupports.clear();
 		return buffers;
 	}
 }

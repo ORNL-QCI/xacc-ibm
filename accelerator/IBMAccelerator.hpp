@@ -155,7 +155,7 @@ public:
 				"Provide the backend name.")
 				("ibm-shots", value<std::string>(), "Provide the number of shots to execute.")
 				("ibm-list-backends", "List the available backends at the IBM Quantum Experience URL.")
-				("ibm-api-url", "");
+				("ibm-api-url", "")("ibm-write-openqasm", "");
 
 		return desc;
 	}
@@ -218,6 +218,8 @@ public:
 
 	IBMAccelerator(std::shared_ptr<RestClient> client) : RemoteAccelerator(client) {}
 
+	virtual bool isPhysical();
+
 	/**
 	 * The destructor
 	 */
@@ -254,6 +256,8 @@ private:
 	 * IBMBackend struct data structure.
 	 */
 	std::map<std::string, IBMBackend> availableBackends;
+
+	std::map<int, std::vector<int>> measurementSupports;
 
 	IBMBackend chosenBackend;
 
