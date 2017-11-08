@@ -32,6 +32,8 @@
 
 #include "GateQIR.hpp"
 #include "XACC.hpp"
+#include "IBMAcceleratorBuffer.hpp"
+
 #include <Eigen/src/Householder/BlockHouseholder.h>
 #include <Eigen/src/Householder/Householder.h>
 #include <Eigen/src/Householder/HouseholderSequence.h>
@@ -54,7 +56,7 @@ std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 		XACCError("Invalid buffer size.");
 	}
 
-	std::shared_ptr<AcceleratorBuffer> buffer = std::make_shared<AcceleratorBuffer>(varId, 30);
+	std::shared_ptr<AcceleratorBuffer> buffer = std::make_shared<IBMAcceleratorBuffer>(varId, 30);
 
 	storeBuffer(varId, buffer);
 	return buffer;
@@ -68,9 +70,9 @@ std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 	}
 
 	std::shared_ptr<AcceleratorBuffer> buffer = std::make_shared<
-				AcceleratorBuffer>(varId, size);
+			IBMAcceleratorBuffer>(varId, size);
 
-	if (!isPhysical() && !computedMeasurementAccuracy) {
+	if (isPhysical() && !computedMeasurementAccuracy) {
 		computedMeasurementAccuracy = true;
 		computeMeasurementAccuracy(buffer);
 	}
@@ -81,7 +83,7 @@ std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 
 void IBMAccelerator::computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffer> buffer) {
 
-	XACCInfo("COMPUTING MEASUREMENT ACCURACY");
+	XACCInfo("IBM Physical QPU - computing assignment errors.");
 	std::vector<std::shared_ptr<Function>> functions;
 	for (int i = 0; i < buffer->size(); i++) {
 
@@ -103,7 +105,6 @@ void IBMAccelerator::computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffe
 		functions.push_back(kernel1);
 	}
 
-	XACCInfo(std::to_string(buffer->size()) + " - WE HAVE " + std::to_string(functions.size()) + " Kernels to launch");
 	auto resultBuffers = execute(buffer, functions);
 
 	std::string measuredZeros = "";
@@ -111,9 +112,7 @@ void IBMAccelerator::computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffe
 		measuredZeros += "0";
 	}
 
-	XACCInfo("MEASURED ZERO: " + measuredZeros);
-	std::ofstream output("ibm_measurement_accuracy_results.csv");
-	int counter = 0;
+	int counter = buffer->size()-1;
 	for (int i = 0; i < resultBuffers.size(); i+=2) {
 
 		auto measuredZeroOnQbitIResults = resultBuffers[i];
@@ -122,30 +121,15 @@ void IBMAccelerator::computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffe
 		auto measuredOne = measuredZeros;
 		measuredOne[counter] = '1';
 
-		XACCInfo("MEASURED ZERO: " + measuredOne);
 
-		auto p00 = measuredZeroOnQbitIResults->computeMeasurementProbability(measuredZeros);
-		auto p11 = measuredOneOnQbitIResults->computeMeasurementProbability(measuredOne);
+		auto p10 = measuredZeroOnQbitIResults->computeMeasurementProbability(measuredOne);
+		auto p01 = measuredOneOnQbitIResults->computeMeasurementProbability(measuredZeros);
 
-		XACCInfo("PROBS: " + std::to_string(p00) + ", " + std::to_string(p11));
-		Eigen::Vector2d b(2);
-		b << 1 - p00, 1 - p11;
-
-		Eigen::Matrix2d A(2,2);
-		A << 1, -1, -1, 1;
-
-		Eigen::Vector2d etas = A.colPivHouseholderQr().solve(b);
-
-		std::stringstream s;
-		s << etas.transpose();
-		XACCInfo("DATA: " + s.str());
-		output << counter << ", " << etas(0) << ", " << etas(1);
-		output.flush();
-		counter++;
+		XACCInfo("Probabilities of Error: (" + std::to_string(p10) + ", " + std::to_string(p01) + ")");
+		std::stringstream ss;
+		ss << p01 << "," << p10;
+		xacc::setOption("ibm-rescale-expectation-values", ss.str());
 	}
-
-	output.close();
-
 }
 
 bool IBMAccelerator::isValidBufferSize(const int NBits) {
@@ -404,10 +388,10 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 			std::stringstream xx;
 			xx << outcome << " " << nOccurrences << " times";
 			XACCInfo("IBM Measurement outcome: " + xx.str() +".");
-			buffer->appendMeasurement(outcome, nOccurrences);
-//			for (int i = 0; i < nOccurrences; i++) {
-//				buffer->appendMeasurement(outcome);
-//			}
+//			buffer->appendMeasurement(outcome);//, nOccurrences);
+			for (int i = 0; i < nOccurrences; i++) {
+				buffer->appendMeasurement(outcome);
+			}
 		}
 
 		measurementSupports.clear();
@@ -443,6 +427,8 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 					boost::replace_all(bitStr, " ", "");
 				}
 
+				XACCInfo("IBM Results: " + std::string(bitStr) + ":" + std::to_string(nOccurrences));
+
 				if (!chosenBackend.isSimulator) {
 					if (buffer->size() < bitStr.length()) {
 						bitStr = bitStr.substr(bitStr.length() - buffer->size(),
@@ -462,12 +448,12 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 					}
 				}
 
-				XACCInfo("IBM Results: " + std::string(itr->name.GetString()) + ":" + std::to_string(itr->value.GetInt()));
+				XACCInfo("Our Results: " + std::string(bitStr) + ":" + std::to_string(itr->value.GetInt()));
+
 				boost::dynamic_bitset<> outcome(bitStr);
-				tmpBuffer->appendMeasurement(outcome, nOccurrences);
-//				for (int i = 0; i < nOccurrences; i++) {
-//					tmpBuffer->appendMeasurement(outcome);
-//				}
+				for (int i = 0; i < nOccurrences; i++) {
+					tmpBuffer->appendMeasurement(outcome);
+				}
 			}
 
 			XACCInfo("--------------------------");

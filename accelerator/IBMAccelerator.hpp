@@ -234,8 +234,8 @@ private:
 
 	/**
 	 * Private utility to search for the IBM
-	 * API key in $HOME/.pyquil_config, $PYQUIL_CONFIG,
-	 * or --api-key command line arg
+	 * API key in $HOME/.ibm_config, $IBM_CONFIG,
+	 * or --ibm-api-key command line arg
 	 */
 	void searchAPIKey(std::string& key, std::string& url);
 
