@@ -39,6 +39,7 @@
 #include "OpenQasmVisitor.hpp"
 #include "IBMIRTransformation.hpp"
 
+#include <Eigen/Core>
 #define RAPIDJSON_HAS_STDSTRING 1
 
 #include "rapidjson/prettywriter.h"
@@ -226,6 +227,10 @@ public:
 	virtual ~IBMAccelerator() {}
 
 private:
+
+	void computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffer> buffer);
+
+	bool computedMeasurementAccuracy = false;
 
 	/**
 	 * Private utility to search for the IBM
