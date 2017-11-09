@@ -68,7 +68,7 @@ std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 	std::shared_ptr<AcceleratorBuffer> buffer = std::make_shared<
 			IBMAcceleratorBuffer>(varId, size);
 
-	if (xacc::optionExists("ibm-correct-assignment-errors")) {
+	if (xacc::optionExists("ibm-correct-assignment-errors") && !computedMeasurementAccuracy) {
 		computedMeasurementAccuracy = true;
 		computeMeasurementAccuracy(buffer);
 	}
