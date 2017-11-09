@@ -39,7 +39,6 @@
 #include "OpenQasmVisitor.hpp"
 #include "IBMIRTransformation.hpp"
 
-#include <Eigen/Core>
 #define RAPIDJSON_HAS_STDSTRING 1
 
 #include "rapidjson/prettywriter.h"
@@ -156,8 +155,10 @@ public:
 				"Provide the backend name.")
 				("ibm-shots", value<std::string>(), "Provide the number of shots to execute.")
 				("ibm-list-backends", "List the available backends at the IBM Quantum Experience URL.")
-				("ibm-api-url", "")("ibm-write-openqasm", "");
-
+				("ibm-api-url", "")("ibm-write-openqasm", "")
+				("ibm-correct-assignment-errors", "Indicate that we should run kernels first that compute "
+						"assignment error, and then correct for "
+						"that in computing expectation values.");
 		return desc;
 	}
 

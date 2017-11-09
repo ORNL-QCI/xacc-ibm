@@ -34,10 +34,6 @@
 #include "XACC.hpp"
 #include "IBMAcceleratorBuffer.hpp"
 
-#include <Eigen/src/Householder/BlockHouseholder.h>
-#include <Eigen/src/Householder/Householder.h>
-#include <Eigen/src/Householder/HouseholderSequence.h>
-#include <Eigen/src/QR/ColPivHouseholderQR.h>
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
 
@@ -72,7 +68,7 @@ std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 	std::shared_ptr<AcceleratorBuffer> buffer = std::make_shared<
 			IBMAcceleratorBuffer>(varId, size);
 
-	if (isPhysical() && !computedMeasurementAccuracy) {
+	if (xacc::optionExists("ibm-correct-assignment-errors")) {
 		computedMeasurementAccuracy = true;
 		computeMeasurementAccuracy(buffer);
 	}
@@ -160,11 +156,11 @@ std::vector<std::shared_ptr<IRTransformation>> IBMAccelerator::getIRTransformati
 		}
 	}
 
-//	if (!backend.couplers.empty()) {
+	if (!backend.couplers.empty()) {
 		auto transform = std::make_shared<IBMIRTransformation>(
 				testCouplers);
 		transformations.push_back(transform);
-//	}
+	}
 	return transformations;
 }
 
@@ -388,7 +384,6 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 			std::stringstream xx;
 			xx << outcome << " " << nOccurrences << " times";
 			XACCInfo("IBM Measurement outcome: " + xx.str() +".");
-//			buffer->appendMeasurement(outcome);//, nOccurrences);
 			for (int i = 0; i < nOccurrences; i++) {
 				buffer->appendMeasurement(outcome);
 			}
