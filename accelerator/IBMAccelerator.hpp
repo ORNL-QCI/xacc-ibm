@@ -101,7 +101,15 @@ public:
 	 */
 	virtual std::shared_ptr<AcceleratorBuffer> createBuffer(
 				const std::string& varId);
-
+//
+//	virtual std::vector<std::shared_ptr<AcceleratorBuffer>> execute(
+//			std::shared_ptr<AcceleratorBuffer> buffer,
+//			const std::vector<std::shared_ptr<Function>> functions);
+//
+//	virtual void execute(std::shared_ptr<AcceleratorBuffer> buffer,
+//				const std::shared_ptr<Function> function) {
+//		RemoteAccelerator::Exe
+//	}
 	/**
 	 * Initialize this Accelerator. This method is called
 	 * by the XACC framework after an Accelerator has been
@@ -158,7 +166,8 @@ public:
 				("ibm-api-url", "")("ibm-write-openqasm", "")
 				("ibm-correct-assignment-errors", "Indicate that we should run kernels first that compute "
 						"assignment error, and then correct for "
-						"that in computing expectation values.");
+						"that in computing expectation values.")
+						("ibm-assignment-error-shots", value<std::string>(), "");
 		return desc;
 	}
 

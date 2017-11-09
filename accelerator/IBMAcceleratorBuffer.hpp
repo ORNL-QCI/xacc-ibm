@@ -37,6 +37,20 @@ public:
 	}
 
 	/**
+	 * Print information about this AcceleratorBuffer to the
+	 * given output stream.
+	 *
+	 * @param stream Stream to write the buffer to.
+	 */
+	virtual void print(std::ostream& stream) {
+		stream << "expectation: " << getExpectationValueZ() << "\n";
+		for (auto& kv : bitStringToCounts) {
+			stream << "measure result: " << kv.first << ", " << kv.second << "\n";
+		}
+		return;
+	}
+
+	/**
 	 * Compute and return the expectation value with respect
 	 * to the Pauli-Z operator. Here we provide a base implementation
 	 * based on an ensemble of measurement results. Subclasses
@@ -65,7 +79,9 @@ public:
 
 			XACCInfo("P+-: " + std::to_string(pPlus) + ", " + std::to_string(pMinus));
 
-			val = (val + pPlus) / (1.0-pMinus);
+//			val = (val + pPlus) / (1.0-pMinus);
+
+			val = (val - pMinus) / (1.0 - pPlus);
 
 			XACCInfo("New Expectation Value: " + std::to_string(val));
 		}

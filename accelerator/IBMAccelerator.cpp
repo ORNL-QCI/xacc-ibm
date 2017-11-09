@@ -76,6 +76,47 @@ std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 	storeBuffer(varId, buffer);
 	return buffer;
 }
+/*
+ * FUTURE PLANS, EXECUTE THIS AT EACH EXECUTION FOR ASSIGNMENT ERRORS
+virtual std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::execute(
+		std::shared_ptr<AcceleratorBuffer> buffer,
+		const std::vector<std::shared_ptr<Function>> functions) {
+
+	if (xacc::optionExists("ibm-correct-assignment-errors")) {
+		std::vector<std::shared_ptr<Function>> measureFunctions;
+		for (int i = 0; i < buffer->size(); i++) {
+
+			auto kernel0 = std::make_shared<GateFunction>("measure_0_for_Qbit"+std::to_string(i));
+			auto kernel1 = std::make_shared<GateFunction>("measure_1_for_Qbit"+std::to_string(i));
+
+			auto measure0 = GateInstructionRegistry::instance()->create("Measure", std::vector<int>{i});
+			InstructionParameter p0(0);
+			measure0->setParameter(0,p0);
+			kernel0->addInstruction(measure0);
+
+			auto x = GateInstructionRegistry::instance()->create("X", std::vector<int>{i});
+			auto measure1 = GateInstructionRegistry::instance()->create("Measure", std::vector<int>{i});
+			measure1->setParameter(0,p0);
+			kernel1->addInstruction(x);
+			kernel1->addInstruction(measure1);
+
+			measureFunctions.push_back(kernel0);
+			measureFunctions.push_back(kernel1);
+		}
+
+		std::vector<std::shared_ptr<Function>> newFunctions;
+		newFunctions.reserve( measureFunctions.size() + functions.size() ); // preallocate memory
+		newFunctions.insert( newFunctions.end(), measureFunctions.begin(), measureFunctions.end() );
+		newFunctions.insert( newFunctions.end(), functions.begin(), functions.end() );
+
+		for (auto f : newFunctions) {
+			std::cout << "HELLO: " << f->getName() << ""
+		}
+		return RemoteAccelerator::execute(buffer, newFunctions);
+	} else {
+		return RemoteAccelerator::execute(buffer, functions);
+	}
+}*/
 
 void IBMAccelerator::computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffer> buffer) {
 
@@ -101,7 +142,25 @@ void IBMAccelerator::computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffe
 		functions.push_back(kernel1);
 	}
 
-	auto resultBuffers = execute(buffer, functions);
+	std::vector<std::shared_ptr<AcceleratorBuffer>> resultBuffers;
+	if (xacc::optionExists("ibm-assignment-error-shots")) {
+
+		std::string oldShots = "1024";
+		if (xacc::optionExists("ibm-shots")) {
+			oldShots = xacc::getOption("ibm-shots");
+		}
+
+		auto newShots = xacc::getOption("ibm-assignment-error-shots");
+
+		xacc::setOption("ibm-shots", newShots);
+
+		resultBuffers = execute(buffer, functions);
+
+		xacc::setOption("ibm-shots", oldShots);
+
+	} else {
+		resultBuffers = execute(buffer, functions);
+	}
 
 	std::string measuredZeros = "";
 	for (int i = 0; i < buffer->size(); i++) {
