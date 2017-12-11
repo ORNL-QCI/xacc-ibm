@@ -70,11 +70,26 @@ protected:
 	int _nQubits;
 public:
 
+	virtual const std::string name() const {
+		return "openqasm-visitor";
+	}
+
+	virtual const std::string description() const {
+		return "Map XACC IR to OpenQasm.";
+	}
+
+	OpenQasmVisitor() : OpenQasmVisitor(16) {
+	}
+
 	OpenQasmVisitor(const int nQubits, bool skipPreamble = false) : _nQubits(nQubits) {
 		// Create a qubit registry
 		if (!skipPreamble) {
 			OpenQasmStr += "\ninclude \\\"qelib1.inc\\\";\nqreg q[" + std::to_string(nQubits) + "];\n";
 		}
+	}
+
+	virtual const std::string toString() {
+		return getOpenQasmString();
 	}
 
 	/**

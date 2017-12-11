@@ -53,8 +53,11 @@ public:
 	 */
 	void Start(BundleContext context) {
 		auto acc = std::make_shared<xacc::quantum::IBMAccelerator>();
+		auto vis = std::make_shared<xacc::quantum::OpenQasmVisitor>();
+
 		context.RegisterService<xacc::Accelerator>(acc);
 		context.RegisterService<xacc::OptionsProvider>(acc);
+		context.RegisterService<xacc::BaseInstructionVisitor>(vis);
 	}
 
 	/**
