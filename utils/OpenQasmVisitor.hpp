@@ -101,6 +101,11 @@ public:
 		OpenQasmStr += ss.str();
 	}
 
+	void visit(Identity& i) {
+		OpenQasmStr += "id q[" + std::to_string(i.bits()[0]) + "];\n";
+	}
+
+
 	/**
 	 * Visit CNOT gates
 	 */
