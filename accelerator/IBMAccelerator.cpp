@@ -220,6 +220,8 @@ std::vector<std::shared_ptr<IRTransformation>> IBMAccelerator::getIRTransformati
 				testCouplers);
 		transformations.push_back(transform);
 	}
+
+        transformations.clear();
 	return transformations;
 }
 
@@ -249,15 +251,15 @@ void IBMAccelerator::initialize() {
 	d.Parse(response);
 
 	for (auto& b : d.GetArray()) {
-
 		IBMBackend backend;
 		if (b.HasMember("nQubits")) {
 			backend.nQubits = b["nQubits"].GetInt();
 		}
 		backend.name = b["name"].GetString();
-		backend.description = b["description"].GetString();
+		backend.description = b.HasMember("description") ? b["description"].GetString() : "";
 		backend.status = !boost::contains(b["status"].GetString(),"off");
 
+		
 		backend.isSimulator = b["simulator"].GetBool();
 		if (!backend.isSimulator && b.HasMember("couplingMap")) {
 			auto couplers = b["couplingMap"].GetArray();
