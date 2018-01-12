@@ -105,6 +105,9 @@ public:
 		OpenQasmStr += "id q[" + std::to_string(i.bits()[0]) + "];\n";
 	}
 
+	void visit(CZ& cz) {
+		XACCError("cz not supported");
+	}
 
 	/**
 	 * Visit CNOT gates
