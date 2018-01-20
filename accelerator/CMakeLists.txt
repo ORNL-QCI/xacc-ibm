@@ -48,7 +48,7 @@ if (OPENSSL_FOUND AND CPPREST_LIB)
 
    install(TARGETS ${LIBRARY_NAME} DESTINATION ${XACC_ROOT}/lib/plugins/accelerators)
    
-   file (GLOB test_files ../tests/*.cpp)
+   file (GLOB test_files ../tests/OpenQasmVisitorTester.cpp)
    add_tests("${test_files}" "${CMAKE_CURRENT_SOURCE_DIR}" "${Boost_LIBRARIES};${XACC_LIBRARIES};xacc-ibm-accelerator")
    
 else()
