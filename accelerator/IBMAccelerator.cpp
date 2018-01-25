@@ -49,7 +49,7 @@ namespace quantum {
 std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 			const std::string& varId) {
 	if (!isValidBufferSize(30)) {
-		XACCError("Invalid buffer size.");
+		xacc::error("Invalid buffer size.");
 	}
 
 	std::shared_ptr<AcceleratorBuffer> buffer = std::make_shared<IBMAcceleratorBuffer>(varId, 30);
@@ -62,129 +62,14 @@ std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 std::shared_ptr<AcceleratorBuffer> IBMAccelerator::createBuffer(
 		const std::string& varId, const int size) {
 	if (!isValidBufferSize(size)) {
-		XACCError("Invalid buffer size.");
+		xacc::error("Invalid buffer size.");
 	}
 
 	std::shared_ptr<AcceleratorBuffer> buffer = std::make_shared<
 			IBMAcceleratorBuffer>(varId, size);
 
-	if (xacc::optionExists("ibm-correct-assignment-errors") && !computedMeasurementAccuracy) {
-		computedMeasurementAccuracy = true;
-		computeMeasurementAccuracy(buffer);
-	}
-
 	storeBuffer(varId, buffer);
 	return buffer;
-}
-/*
- * FUTURE PLANS, EXECUTE THIS AT EACH EXECUTION FOR ASSIGNMENT ERRORS
-virtual std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::execute(
-		std::shared_ptr<AcceleratorBuffer> buffer,
-		const std::vector<std::shared_ptr<Function>> functions) {
-
-	if (xacc::optionExists("ibm-correct-assignment-errors")) {
-		std::vector<std::shared_ptr<Function>> measureFunctions;
-		for (int i = 0; i < buffer->size(); i++) {
-
-			auto kernel0 = std::make_shared<GateFunction>("measure_0_for_Qbit"+std::to_string(i));
-			auto kernel1 = std::make_shared<GateFunction>("measure_1_for_Qbit"+std::to_string(i));
-
-			auto measure0 = GateInstructionRegistry::instance()->create("Measure", std::vector<int>{i});
-			InstructionParameter p0(0);
-			measure0->setParameter(0,p0);
-			kernel0->addInstruction(measure0);
-
-			auto x = GateInstructionRegistry::instance()->create("X", std::vector<int>{i});
-			auto measure1 = GateInstructionRegistry::instance()->create("Measure", std::vector<int>{i});
-			measure1->setParameter(0,p0);
-			kernel1->addInstruction(x);
-			kernel1->addInstruction(measure1);
-
-			measureFunctions.push_back(kernel0);
-			measureFunctions.push_back(kernel1);
-		}
-
-		std::vector<std::shared_ptr<Function>> newFunctions;
-		newFunctions.reserve( measureFunctions.size() + functions.size() ); // preallocate memory
-		newFunctions.insert( newFunctions.end(), measureFunctions.begin(), measureFunctions.end() );
-		newFunctions.insert( newFunctions.end(), functions.begin(), functions.end() );
-
-		for (auto f : newFunctions) {
-			std::cout << "HELLO: " << f->getName() << ""
-		}
-		return RemoteAccelerator::execute(buffer, newFunctions);
-	} else {
-		return RemoteAccelerator::execute(buffer, functions);
-	}
-}*/
-
-void IBMAccelerator::computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffer> buffer) {
-
-	XACCInfo("IBM Physical QPU - computing assignment errors.");
-	std::vector<std::shared_ptr<Function>> functions;
-	for (int i = 0; i < buffer->size(); i++) {
-
-		auto kernel0 = std::make_shared<GateFunction>("measure_0_for_Qbit"+std::to_string(i));
-		auto kernel1 = std::make_shared<GateFunction>("measure_1_for_Qbit"+std::to_string(i));
-
-		auto measure0 = GateInstructionRegistry::instance()->create("Measure", std::vector<int>{i});
-		InstructionParameter p0(0);
-		measure0->setParameter(0,p0);
-		kernel0->addInstruction(measure0);
-
-		auto x = GateInstructionRegistry::instance()->create("X", std::vector<int>{i});
-		auto measure1 = GateInstructionRegistry::instance()->create("Measure", std::vector<int>{i});
-		measure1->setParameter(0,p0);
-		kernel1->addInstruction(x);
-		kernel1->addInstruction(measure1);
-
-		functions.push_back(kernel0);
-		functions.push_back(kernel1);
-	}
-
-	std::vector<std::shared_ptr<AcceleratorBuffer>> resultBuffers;
-	if (xacc::optionExists("ibm-assignment-error-shots")) {
-
-		std::string oldShots = "1024";
-		if (xacc::optionExists("ibm-shots")) {
-			oldShots = xacc::getOption("ibm-shots");
-		}
-
-		auto newShots = xacc::getOption("ibm-assignment-error-shots");
-
-		xacc::setOption("ibm-shots", newShots);
-
-		resultBuffers = execute(buffer, functions);
-
-		xacc::setOption("ibm-shots", oldShots);
-
-	} else {
-		resultBuffers = execute(buffer, functions);
-	}
-
-	std::string measuredZeros = "";
-	for (int i = 0; i < buffer->size(); i++) {
-		measuredZeros += "0";
-	}
-
-	int counter = buffer->size()-1;
-	for (int i = 0; i < resultBuffers.size(); i+=2) {
-
-		auto measuredZeroOnQbitIResults = resultBuffers[i];
-		auto measuredOneOnQbitIResults = resultBuffers[i+1];
-
-		auto measuredOne = measuredZeros;
-		measuredOne[counter] = '1';
-
-
-		auto p10 = measuredZeroOnQbitIResults->computeMeasurementProbability(measuredOne);
-		auto p01 = measuredOneOnQbitIResults->computeMeasurementProbability(measuredZeros);
-
-		XACCInfo("Probabilities of Error: (" + std::to_string(p10) + ", " + std::to_string(p01) + ")");
-		std::stringstream ss;
-		ss << p01 << "," << p10;
-		xacc::setOption("ibm-rescale-expectation-values", ss.str());
-	}
 }
 
 bool IBMAccelerator::isValidBufferSize(const int NBits) {
@@ -202,7 +87,7 @@ std::vector<std::shared_ptr<IRTransformation>> IBMAccelerator::getIRTransformati
 	}
 
 	if (!availableBackends.count(backendName)) {
-		XACCError(backendName + " is not available.");
+		xacc::error(backendName + " is not available.");
 	}
 
 	auto backend = availableBackends[backendName];
@@ -239,7 +124,7 @@ void IBMAccelerator::initialize() {
 	auto response = restClient->post(url, "/api/users/loginWithToken", tokenParam, headers);
 
 	if (boost::contains(response, "error")) {
-		XACCError("Error received from IBM\n" + response);
+		xacc::error("Error received from IBM\n" + response);
 	}
 
 	Document d;
@@ -283,7 +168,7 @@ bool IBMAccelerator::isPhysical() {
 	if (xacc::optionExists("ibm-backend")) {
 		auto newBackend = xacc::getOption("ibm-backend");
 		if (availableBackends.find(newBackend) == availableBackends.end()) {
-			XACCError("Invalid IBM Backend string");
+			xacc::error("Invalid IBM Backend string");
 		}
 		backendName = newBackend;
 		return !availableBackends[backendName].isSimulator;
@@ -310,10 +195,10 @@ const std::string IBMAccelerator::processInput(
 	if (xacc::optionExists("ibm-backend")) {
 		auto newBackend = xacc::getOption("ibm-backend");
 		if (availableBackends.find(newBackend) == availableBackends.end()) {
-			XACCError("Invalid IBM Backend string");
+			xacc::error("Invalid IBM Backend string");
 		}
 		if (!availableBackends[newBackend].status) {
-			XACCError(
+			xacc::error(
 					newBackend + " is currently unavailable, status = off");
 		}
 
@@ -380,7 +265,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 		const std::string& response) {
 
 	if (boost::contains(response, "error")) {
-		XACCError( response );
+		xacc::error( response );
 	}
 	Document d;
 	d.Parse(response);
@@ -423,7 +308,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 
 	std::cout << std::endl;
 
-//	XACCInfo(getResponse);
+//	xacc::info(getResponse);
 	d.Parse(getResponse);
 
 	auto qasmsArray = d["qasms"].GetArray();
@@ -444,7 +329,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 			boost::dynamic_bitset<> outcome(bitStr);
 			std::stringstream xx;
 			xx << outcome << " " << nOccurrences << " times";
-			XACCInfo("IBM Measurement outcome: " + xx.str() +".");
+			xacc::info("IBM Measurement outcome: " + xx.str() +".");
 			for (int i = 0; i < nOccurrences; i++) {
 				buffer->appendMeasurement(outcome);
 			}
@@ -459,13 +344,13 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 
 		for (SizeType i = 0; i < qasmsArray.Size(); i++) {
 
-			XACCInfo("--------------------------");
-			XACCInfo("Kernel " + std::to_string(i));
+			xacc::info("--------------------------");
+			xacc::info("Kernel " + std::to_string(i));
 			std::stringstream sss;
 			for (auto q : measurementSupports[i]) {
 				sss << q << ", ";
 			}
-			XACCInfo("Measured Qubits: " + sss.str());
+			xacc::info("Measured Qubits: " + sss.str());
 
 			auto tmpBuffer = createBuffer(buffer->name() + std::to_string(i),
 					buffer->size());
@@ -483,7 +368,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 					boost::replace_all(bitStr, " ", "");
 				}
 
-				XACCInfo("IBM Results: " + std::string(bitStr) + ":" + std::to_string(nOccurrences));
+				xacc::info("IBM Results: " + std::string(bitStr) + ":" + std::to_string(nOccurrences));
 
 				if (!chosenBackend.isSimulator) {
 					if (buffer->size() < bitStr.length()) {
@@ -504,7 +389,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 					}
 				}
 
-				XACCInfo("Our Results: " + std::string(bitStr) + ":" + std::to_string(itr->value.GetInt()));
+				xacc::info("Our Results: " + std::string(bitStr) + ":" + std::to_string(itr->value.GetInt()));
 
 				boost::dynamic_bitset<> outcome(bitStr);
 				for (int i = 0; i < nOccurrences; i++) {
@@ -512,7 +397,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 				}
 			}
 
-			XACCInfo("--------------------------");
+			xacc::info("--------------------------");
 
 			buffers.push_back(tmpBuffer);
 		}
@@ -531,7 +416,7 @@ std::shared_ptr<AcceleratorGraph> IBMAccelerator::getAcceleratorConnectivity() {
 	}
 
 	if (!availableBackends.count(backendName)) {
-		XACCError(backendName + " is not available.");
+		xacc::error(backendName + " is not available.");
 	}
 
 	auto backend = availableBackends[backendName];
@@ -572,7 +457,7 @@ void IBMAccelerator::searchAPIKey(std::string& key, std::string& url) {
 
 		// Ensure that the user has provided an api-key
 		if (!options->exists("ibm-api-key")) {
-			XACCError("Cannot execute kernel on IBM chip without API Key.");
+			xacc::error("Cannot execute kernel on IBM chip without API Key.");
 		}
 
 		// Set the API Key
@@ -585,7 +470,7 @@ void IBMAccelerator::searchAPIKey(std::string& key, std::string& url) {
 
 	// If its still empty, then we have a problem
 	if (key.empty()) {
-		XACCError("Error. The API Key is empty. Please place it "
+		xacc::error("Error. The API Key is empty. Please place it "
 				"in your $HOME/.ibm_config file, $IBM_CONFIG env var, "
 				"or provide --ibm-api-key argument.");
 	}

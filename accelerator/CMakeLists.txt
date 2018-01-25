@@ -52,5 +52,5 @@ if (OPENSSL_FOUND AND CPPREST_LIB)
    add_tests("${test_files}" "${CMAKE_CURRENT_SOURCE_DIR}" "${Boost_LIBRARIES};${XACC_LIBRARIES};xacc-ibm-accelerator")
    
 else()
-   message(STATUS "OpenSSL not found, cannot include Rigetti Accelerator plugin.")
+	message(STATUS "OpenSSL not found, cannot include IBM Accelerator plugin.")
 endif()
