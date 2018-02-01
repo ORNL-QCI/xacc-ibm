@@ -25,8 +25,6 @@ include_directories(${CMAKE_BINARY_DIR})
 
 include_directories(${XACC_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
-include_directories(${XACC_ROOT}/include/rapidjson/include)
-include_directories(${XACC_ROOT}/include/eigen)
 include_directories(${CMAKE_SOURCE_DIR}/utils)
 
 link_directories(${XACC_LIBRARY_DIR})
