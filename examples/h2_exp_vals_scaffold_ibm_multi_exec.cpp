@@ -87,11 +87,10 @@ int main (int argc, char** argv) {
 	// Initialize the XACC Framework
 	xacc::Initialize(argc, argv);
 
-	// Create a reference to the Rigetti 
-	// QPU at api.rigetti.com/qvm
+	// Create a reference to the IBM QPU 
 	auto qpu = xacc::getAccelerator("ibm");
 
-	// Allocate a register of 3 qubits
+	// Allocate a register of 2 qubits
 	auto qubitReg = qpu->createBuffer("qreg", 2);
 
 	// Create a Program
