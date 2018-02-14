@@ -182,8 +182,9 @@ public:
 	virtual bool handleOptions(variables_map& map) {
 		if (map.count("ibm-list-backends")) {
 			initialize();
+			XACCLogger::instance()->enqueueLog("");
 			for (auto s : availableBackends) {
-				XACCInfo("Available New IBM Backend: " +
+				XACCLogger::instance()->enqueueLog("Available New IBM Backend: " +
 						std::string(s.first) + " [" +
 						(s.second.status ? "on" : "off")
 						+ "]");
