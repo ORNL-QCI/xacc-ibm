@@ -131,7 +131,7 @@ void IBMAccelerator::initialize() {
 	d.Parse(response);
 	currentApiToken = d["id"].GetString();
 
-	response = restClient->get(url, "/api/Backends?access_token="+currentApiToken);
+	response = handleExceptionRestClientGet(url, "/api/Backends?access_token="+currentApiToken);
 
 	d.Parse(response);
 
@@ -238,6 +238,7 @@ const std::string IBMAccelerator::processInput(
 
 		jsonStr += "{\"qasm\": \"" + qasmStr + "\"},";
 
+//		xacc::info("OpenQasm: " + qasmStr);
 		if(xacc::optionExists("ibm-write-openqasm")) {
 			auto dir = xacc::getOption("ibm-write-openqasm");
 			boost::replace_all(qasmStr, "\\n", "\n");
@@ -273,7 +274,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 
 	std::string getPath = "/api/Jobs/"+jobId + "?access_token="+currentApiToken;
 
-	std::string getResponse = restClient->get(url, getPath);
+	std::string getResponse = handleExceptionRestClientGet(url, getPath);
 
 	// Loop until the job is complete,
 	// get the JSON response
@@ -281,8 +282,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 	bool jobCompleted = false;
 	while (!jobCompleted) {
 
-		// Execute HTTP Get
-		getResponse = restClient->get(url, getPath);
+		getResponse = handleExceptionRestClientGet(url, getPath);
 
 		// Search the result for the status : COMPLETED indicator
 		if (boost::contains(getResponse, "COMPLETED")) {
@@ -293,6 +293,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 		d.Parse(getResponse);
 		if (d.HasMember("infoQueue")) {
 			auto info = d["infoQueue"].GetObject();
+			std::cout << "\r                                                 ";
 			std::cout << "\r" << "Job Response: " << d["status"].GetString()
 					<< ", queue: " << d["infoQueue"]["status"].GetString();
 			if (info.HasMember("position")) {
@@ -300,10 +301,12 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 						<< std::flush;
 			}
 		} else {
+			std::cout << "\r                                                 ";
 			std::cout << "\r" << "Job Response: " << d["status"].GetString()
 					<< std::flush;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//		std::cout << "GetResponse: " << getResponse << "\n";
 	}
 
 	std::cout << std::endl;
