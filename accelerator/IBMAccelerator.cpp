@@ -293,7 +293,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 		d.Parse(getResponse);
 		if (d.HasMember("infoQueue")) {
 			auto info = d["infoQueue"].GetObject();
-			std::cout << "\r                                                 ";
+//			std::cout << "\r                                                 ";
 			std::cout << "\r" << "Job Response: " << d["status"].GetString()
 					<< ", queue: " << d["infoQueue"]["status"].GetString();
 			if (info.HasMember("position")) {
@@ -301,7 +301,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 						<< std::flush;
 			}
 		} else {
-			std::cout << "\r                                                 ";
+//			std::cout << "\r                                                 ";
 			std::cout << "\r" << "Job Response: " << d["status"].GetString()
 					<< std::flush;
 		}
