@@ -106,7 +106,7 @@ public:
 	}
 
 	void visit(CZ& cz) {
-		XACCError("cz not supported");
+		xacc::error("cz not supported");
 	}
 
 	/**
@@ -167,7 +167,7 @@ public:
 
 		ss << "if (c" << classicalBitIdx << " == 1) ";
 
-		if (c.nInstructions() > 1) XACCError("IBM only supports single conditional operations.");
+		if (c.nInstructions() > 1) xacc::error("IBM only supports single conditional operations.");
 
 		for (auto inst : c.getInstructions()) {
 			inst->accept(visitor);

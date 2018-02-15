@@ -252,8 +252,7 @@ private:
 				break;
 			} catch (std::exception& e) {
 				ex = e;
-				xacc::info("IBM Accelerator caught exception in "
-						"processResponse while calling restClient->get() "
+				xacc::info("IBM Accelerator caught exception while calling restClient->get() "
 						"- " + std::string(e.what()));
 				retries--;
 				if (retries > 0) {

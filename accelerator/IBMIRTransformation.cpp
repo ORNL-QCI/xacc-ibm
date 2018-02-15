@@ -1,11 +1,12 @@
 #include "IBMIRTransformation.hpp"
+#include "XACC.hpp"
 
 namespace xacc {
 namespace quantum {
 
 std::shared_ptr<IR> IBMIRTransformation::transform(std::shared_ptr<IR> ir) {
 
-	XACCInfo("Executing IBM IR Transformation - Modifying CNOT connectivity.");
+	xacc::info("Executing IBM IR Transformation - Modifying CNOT connectivity.");
 
 	auto newir = std::make_shared<GateQIR>();
 

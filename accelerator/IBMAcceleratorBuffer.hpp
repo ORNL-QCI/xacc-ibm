@@ -65,25 +65,25 @@ public:
 		if (xacc::optionExists("ibm-rescale-expectation-values")) {
 			auto data = xacc::getOption("ibm-rescale-expectation-values");
 
-			XACCInfo("Current Expectation Value: " + std::to_string(val));
-			XACCInfo("Computing Rescaled Exp Val: " + data);
+			xacc::info("Current Expectation Value: " + std::to_string(val));
+			xacc::info("Computing Rescaled Exp Val: " + data);
 			std::vector<std::string> split;
 			boost::split(split, data, boost::is_any_of(","));
 			auto p01 = std::stod(split[0]);
 			auto p10 = std::stod(split[1]);
 
-			XACCInfo("Probs: " + split[0] + ", " + split[1]);
+			xacc::info("Probs: " + split[0] + ", " + split[1]);
 
 			double pPlus = p01 + p10;
 			double pMinus = p01 - p10;
 
-			XACCInfo("P+-: " + std::to_string(pPlus) + ", " + std::to_string(pMinus));
+			xacc::info("P+-: " + std::to_string(pPlus) + ", " + std::to_string(pMinus));
 
 //			val = (val + pPlus) / (1.0-pMinus);
 
 			val = (val - pMinus) / (1.0 - pPlus);
 
-			XACCInfo("New Expectation Value: " + std::to_string(val));
+			xacc::info("New Expectation Value: " + std::to_string(val));
 		}
 
 		return val;
