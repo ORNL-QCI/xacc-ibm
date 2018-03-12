@@ -135,7 +135,8 @@ void IBMAccelerator::initialize() {
 
 	d.Parse(response);
 
-	for (auto& b : d.GetArray()) {
+	auto backendArray = d.GetArray();
+	for (auto& b : backendArray) {
 		IBMBackend backend;
 		if (b.HasMember("nQubits")) {
 			backend.nQubits = b["nQubits"].GetInt();
@@ -143,10 +144,9 @@ void IBMAccelerator::initialize() {
 		backend.name = b["name"].GetString();
 		backend.description = b.HasMember("description") ? b["description"].GetString() : "";
 		backend.status = !boost::contains(b["status"].GetString(),"off");
-
 		
 		backend.isSimulator = b["simulator"].GetBool();
-		if (!backend.isSimulator && b.HasMember("couplingMap")) {
+		if (!backend.isSimulator && b.HasMember("couplingMap") && b["couplingMap"].IsArray()) {
 			auto couplers = b["couplingMap"].GetArray();
 			for (int j = 0; j < couplers.Size(); j++) {
 				backend.couplers.push_back(
