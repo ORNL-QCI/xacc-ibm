@@ -1,5 +1,7 @@
 #include "IBMIRTransformation.hpp"
 #include "XACC.hpp"
+#include "IRProvider.hpp"
+#include "InstructionIterator.hpp"
 
 namespace xacc {
 namespace quantum {
@@ -8,7 +10,8 @@ std::shared_ptr<IR> IBMIRTransformation::transform(std::shared_ptr<IR> ir) {
 
 	xacc::info("Executing IBM IR Transformation - Modifying CNOT connectivity.");
 
-	auto newir = std::make_shared<GateQIR>();
+	std::shared_ptr<IRProvider> irProvider = xacc::getService<IRProvider>("gate");
+	auto newir = irProvider->createIR();
 
 	for (auto kernel : ir->getKernels()) {
 
@@ -23,7 +26,7 @@ std::shared_ptr<IR> IBMIRTransformation::transform(std::shared_ptr<IR> ir) {
 			if (!nextInst->isComposite() && nextInst->isEnabled()) {
 				nextInst->accept(this);
 
-				if (!nextInst->isEnabled() && "CNOT" == nextInst->getName()) {
+				if (!nextInst->isEnabled() && "CNOT" == nextInst->name()) {
 					kernel->removeInstruction(currentKernelInstructionIdx);
 					int count = 0;
 					for (auto inst : newInstructions) {
@@ -54,10 +57,9 @@ void IBMIRTransformation::visit(CNOT& cnot) {
 
 	auto source = cnot.bits()[0];
 	auto target = cnot.bits()[1];
+	std::shared_ptr<IRProvider> gateRegistry = xacc::getService<IRProvider>("gate");
 
 	if (!isCouplingAvailable(source, target)) {
-
-		auto gateRegistry = GateInstructionRegistry::instance();
 
 		// Disable this cnot
 		cnot.disable();
@@ -66,9 +68,9 @@ void IBMIRTransformation::visit(CNOT& cnot) {
 		// the currentKernelInstructionIdx, so I want
 		// to insert 2 Hadamards, a reversed cnot, then 2 hadamards
 
-		auto h0 = gateRegistry->create("H", std::vector<int> { source });
-		auto h1 = gateRegistry->create("H", std::vector<int> { target });
-		auto revCnot = gateRegistry->create("CNOT", std::vector<int> { target,
+		auto h0 = gateRegistry->createInstruction("H", std::vector<int> { source });
+		auto h1 = gateRegistry->createInstruction("H", std::vector<int> { target });
+		auto revCnot = gateRegistry->createInstruction("CNOT", std::vector<int> { target,
 				source });
 
 		newInstructions.push_back(h0);

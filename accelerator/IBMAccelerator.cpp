@@ -30,7 +30,6 @@
  **********************************************************************************/
 #include "IBMAccelerator.hpp"
 
-#include "GateQIR.hpp"
 #include "XACC.hpp"
 #include "IBMAcceleratorBuffer.hpp"
 
@@ -226,7 +225,7 @@ const std::string IBMAccelerator::processInput(
 			auto nextInst = it.next();
 			if (nextInst->isEnabled()) {
 				nextInst->accept(visitor);
-				if (nextInst->getName() == "Measure") {
+				if (nextInst->name() == "Measure") {
 					auto qbitIdx = nextInst->bits()[0];
 					measurementSupports[kernelCounter].push_back(qbitIdx);
 				}
@@ -242,7 +241,7 @@ const std::string IBMAccelerator::processInput(
 		if(xacc::optionExists("ibm-write-openqasm")) {
 			auto dir = xacc::getOption("ibm-write-openqasm");
 			boost::replace_all(qasmStr, "\\n", "\n");
-			std::ofstream out(kernel->getName() + ".openqasm");
+			std::ofstream out(kernel->name() + ".openqasm");
 			out << qasmStr;
 			out.close();
 		}
@@ -311,7 +310,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 
 	std::cout << std::endl;
 
-//	xacc::info(getResponse);
+	xacc::info(getResponse);
 	d.Parse(getResponse);
 
 	auto qasmsArray = d["qasms"].GetArray();

@@ -3,7 +3,6 @@
 
 #include "Accelerator.hpp"
 #include "IRTransformation.hpp"
-#include "GateQIR.hpp"
 #include "CNOT.hpp"
 
 namespace xacc {
