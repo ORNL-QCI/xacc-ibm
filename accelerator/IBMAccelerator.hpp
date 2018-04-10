@@ -239,35 +239,6 @@ public:
 
 private:
 
-	std::string handleExceptionRestClientGet(const std::string& _url, const std::string& path) {
-		std::string getResponse;
-		int retries = 10;
-		std::exception ex;
-		bool succeeded = false;
-		// Execute HTTP Get
-		do {
-			try {
-				getResponse = restClient->get(_url, path);
-				succeeded = true;
-				break;
-			} catch (std::exception& e) {
-				ex = e;
-				xacc::info("IBM Accelerator caught exception while calling restClient->get() "
-						"- " + std::string(e.what()));
-				retries--;
-				if (retries > 0) {
-					xacc::info("Retrying HTTP Get.");
-				}
-			}
-		} while (retries > 0);
-
-		if (!succeeded) {
-			xacc::error("IBM Accelerator failed HTTP Get for Job Response - " + std::string(ex.what()));
-		}
-
-		return getResponse;
-	}
-
 	void computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffer> buffer);
 
 	bool computedMeasurementAccuracy = false;

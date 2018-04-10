@@ -120,7 +120,7 @@ void IBMAccelerator::initialize() {
 			{ "Connection", "keep-alive" }, { "Content-Length", std::to_string(
 					tokenParam.length()) } };
 
-	auto response = restClient->post(url, "/api/users/loginWithToken", tokenParam, headers);
+	auto response = handleExceptionRestClientPost(url, "/api/users/loginWithToken", tokenParam, headers);
 
 	if (boost::contains(response, "error")) {
 		xacc::error("Error received from IBM\n" + response);
