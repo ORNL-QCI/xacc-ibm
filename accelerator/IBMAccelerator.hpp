@@ -228,7 +228,7 @@ public:
 
 	IBMAccelerator() :RemoteAccelerator() {}
 
-	IBMAccelerator(std::shared_ptr<RestClient> client) : RemoteAccelerator(client) {}
+	IBMAccelerator(std::shared_ptr<Client> client) : RemoteAccelerator(client) {}
 
 	virtual bool isPhysical();
 
