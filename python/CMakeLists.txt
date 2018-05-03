@@ -12,5 +12,13 @@ endif(APPLE)
 add_library(pyxaccibm SHARED xacc-ibm-py.cpp)
 
 set_target_properties(pyxaccibm PROPERTIES PREFIX "")
+if(APPLE)
+   set_target_properties(pyxaccibm PROPERTIES INSTALL_RPATH "@loader_path/lib")
+   set_target_properties(pyxaccibm PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+else()
+   set_target_properties(pyxaccibm PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+   set_target_properties(pyxaccibm PROPERTIES LINK_FLAGS "-shared")
+endif()
+
 
 install(TARGETS pyxaccibm DESTINATION ${CMAKE_INSTALL_PREFIX})
