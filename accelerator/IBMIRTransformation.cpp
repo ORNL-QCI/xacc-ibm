@@ -1,7 +1,4 @@
 #include "IBMIRTransformation.hpp"
-#include "XACC.hpp"
-#include "IRProvider.hpp"
-#include "InstructionIterator.hpp"
 
 namespace xacc {
 namespace quantum {

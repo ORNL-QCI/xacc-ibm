@@ -22,10 +22,10 @@ set_target_properties(${LIBRARY_NAME} PROPERTIES
   )
 
 if(BUILD_SHARED_LIBS)
-  set_target_properties(${LIBRARY_NAME} PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN 1
-    )
+	#  set_target_properties(${LIBRARY_NAME} PROPERTIES
+	#    CXX_VISIBILITY_PRESET hidden
+	#    VISIBILITY_INLINES_HIDDEN 1
+	#    )
 endif()
 
 # Embed meta-data from a manifest.json file
@@ -47,5 +47,3 @@ endif()
 
 install(TARGETS ${LIBRARY_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins) 
    
-file (GLOB test_files ../tests/OpenQasmVisitorTester.cpp)
-add_tests("${test_files}" "${CMAKE_CURRENT_SOURCE_DIR}" "${XACC_LIBRARIES};xacc-ibm-accelerator")

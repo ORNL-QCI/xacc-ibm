@@ -28,16 +28,15 @@
  *   Initial API and implementation - Alex McCaskey
  *
  **********************************************************************************/
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE SwapInsertionIRTransformationTester
-
-#include <boost/test/included/unit_test.hpp>
+#include <gtest/gtest.h>
 #include "IBMIRTransformation.hpp"
+#include "X.hpp"
+#include "GateIR.hpp"
 
 using namespace xacc;
 using namespace xacc::quantum;
 
-BOOST_AUTO_TEST_CASE(checkCreation) {
+TEST(IBMIRTransformationTester,checkCreation) {
 
 	std::vector<std::pair<int,int>> couplers {{0,1},{0,2},{1,2},{2,3},{2,4},{3,4}};
 
@@ -66,7 +65,7 @@ BOOST_AUTO_TEST_CASE(checkCreation) {
 	f->addInstruction(m1);
 	f->addInstruction(m2);
 
-	auto ir = std::make_shared<GateQIR>();
+	auto ir = std::make_shared<GateIR>();
 	ir->addKernel(f);
 
 	auto newir = t.transform(ir);
@@ -181,6 +180,13 @@ BOOST_AUTO_TEST_CASE(checkCreation) {
     ]
 })expected";
 
-	BOOST_VERIFY(expected == ss.str());
+	EXPECT_TRUE(expected == ss.str());
 }
 
+int main(int argc, char** argv) {
+   xacc::Initialize();
+   ::testing::InitGoogleTest(&argc, argv);
+   auto ret = RUN_ALL_TESTS();
+   xacc::Finalize();
+   return ret;
+}

@@ -4,6 +4,12 @@
 #include "Accelerator.hpp"
 #include "IRTransformation.hpp"
 #include "CNOT.hpp"
+#include "XACC.hpp"
+#include "IRProvider.hpp"
+#include "InstructionIterator.hpp"
+#include "GateFunction.hpp"
+#include "Hadamard.hpp"
+#include "Measure.hpp"
 
 namespace xacc {
 namespace quantum {

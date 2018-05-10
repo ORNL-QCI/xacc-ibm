@@ -1,0 +1,6 @@
+include_directories(${XACC_INCLUDE_DIRS})
+add_xacc_test(IBMAccelerator)
+target_link_libraries(IBMAcceleratorTester xacc-ibm-accelerator)
+add_xacc_test(IBMIRTransformation)
+target_link_libraries(IBMIRTransformationTester xacc-ibm-accelerator xacc-quantum-gate)
+add_xacc_test(OpenQasmVisitor)

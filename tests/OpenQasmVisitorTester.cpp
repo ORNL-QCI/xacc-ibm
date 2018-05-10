@@ -28,18 +28,15 @@
  *   Initial API and implementation - Alex McCaskey
  *
  **********************************************************************************/
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE OpenQasmVisitorTester
-
 #include <memory>
-#include <boost/test/included/unit_test.hpp>
+#include <gtest/gtest.h>
 #include "OpenQasmVisitor.hpp"
 #include "InstructionIterator.hpp"
 
 using namespace xacc;
 using namespace xacc::quantum;
 
-BOOST_AUTO_TEST_CASE(checkIRToOpenQasm) {
+TEST(OpenQasmVisitorTester,checkIRToOpenQasm) {
 
 	auto f = std::make_shared<GateFunction>("foo");
 
@@ -103,8 +100,13 @@ if (c1 == 1) x q[2];
 )expected";
 
 	std::cout << "EXPECTED: " << expected << "\n";
-	BOOST_VERIFY(expected == visitor->getOpenQasmString());
+	EXPECT_TRUE(expected == visitor->getOpenQasmString());
 
-//	BOOST_VERIFY()
+//	EXPECT_TRUE()
 }
 
+
+int main(int argc, char** argv) {
+   ::testing::InitGoogleTest(&argc, argv);
+   return RUN_ALL_TESTS();
+}

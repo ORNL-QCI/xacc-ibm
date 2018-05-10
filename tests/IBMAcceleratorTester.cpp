@@ -28,11 +28,8 @@
  *   Initial API and implementation - Alex McCaskey
  *
  **********************************************************************************/
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE IBMAcceleratorTester
-
 #include <memory>
-#include <boost/test/included/unit_test.hpp>
+#include <gtest/gtest.h>
 #include "IBMAccelerator.hpp"
 #include "xacc-ibm-config.hpp"
 #include "XACC.hpp"
@@ -45,7 +42,7 @@ using namespace xacc::quantum;
  * post to /api/Jobs?access_token=token
  * get /api/Jobs/" + jobId + "?access_token=token with COMPLETED message
  */
-class FakeRestClient : public RestClient {
+class FakeRestClient : public Client {
 
 protected:
 
@@ -66,6 +63,7 @@ public:
 				const std::string& path, const std::string& postStr,
 				std::map<std::string, std::string> headers = std::map<std::string,
 						std::string> { }) {
+		std::cout << "HELLO WORLD POSTING FAKE CLIENT \n";
 		if (path == "/api/users/loginWithToken") {
 			return fakeInitLogin;
 		} else {
@@ -75,8 +73,11 @@ public:
 
 
 	virtual const std::string get(const std::string& remoteUrl,
-			const std::string& path) {
+			const std::string& path,
+				std::map<std::string, std::string> headers = std::map<std::string,
+						std::string> { }) {
 
+		std::cout << "HELLO WORLD GET FAKE CLIENT \n";
 		if (boost::contains(path, "/api/Backends")) {
 			return fakeInitGetBackends;
 		} else {
@@ -90,7 +91,7 @@ const std::string fakeBackends = R"fakeBackends([{"couplingMap":[[0,1],[0,2],[1,
 const std::string fakePostResultSim = R"fakePostResults({"qasms":[{"qasm":"\ninclude \"qelib1.inc\";\nqreg q[3];\nx q[0];\nh q[1];\ncx q[1], q[2];\ncx q[0], q[1];\nh q[0];\ncreg c0[1];\nmeasure q[0] -> c0[0];\ncreg c1[1];\nmeasure q[1] -> c1[0];\nif (c0 == 1) z q[2];\nif (c1 == 1) x q[2];\ncreg c2[1];\nmeasure q[2] -> c2[0];\n","status":"WORKING_IN_PROGRESS","executionId":"a66ff99b6e44a916ed3a6c7579ee0f06"}],"shots":1024,"backend":{"name":"ibmqx_qasm_simulator"},"status":"RUNNING","maxCredits":3,"usedCredits":0,"creationDate":"2017-10-04T16:49:02.376Z","deleted":false,"id":"fd386cfd16b707b6f5d8ece36d6f7c3b","userId":"12074c90bb6425be346c55a1f1318a03"})fakePostResults";
 const std::string fakeGetResultsSim = R"fakeGetResults({"backend":{"name":"ibmqx_qasm_simulator"},"calibration":{},"creationDate":"2017-10-04T16:49:02.376Z","deleted":false,"id":"fd386cfd16b707b6f5d8ece36d6f7c3b","maxCredits":3,"qasms":[{"executionId":"a66ff99b6e44a916ed3a6c7579ee0f06","qasm":"\ninclude \"qelib1.inc\";\nqreg q[3];\nx q[0];\nh q[1];\ncx q[1], q[2];\ncx q[0], q[1];\nh q[0];\ncreg c0[1];\nmeasure q[0] -> c0[0];\ncreg c1[1];\nmeasure q[1] -> c1[0];\nif (c0 == 1) z q[2];\nif (c1 == 1) x q[2];\ncreg c2[1];\nmeasure q[2] -> c2[0];\n","result":{"data":{"additionalData":{"seed":2842128583},"counts":{"1 0 0":263,"1 0 1":267,"1 1 0":241,"1 1 1":253},"creg_labels":"c2[1] c1[1] c0[1]","time":0.042070099999999999},"date":"2017-10-04T16:49:02.809Z"},"status":"DONE"}],"shots":1024,"status":"COMPLETED","usedCredits":0,"userId":"12074c90bb6425be346c55a1f1318a03"})fakeGetResults";
 
-BOOST_AUTO_TEST_CASE(checkKernelSimExecution) {
+TEST(IBMAcceleratorTester,checkKernelSimExecution) {
         xacc::Initialize();
         xacc::setOption("ibm-api-key", "hello");
         xacc::setOption("ibm-api-url", "hello");
@@ -136,7 +137,7 @@ BOOST_AUTO_TEST_CASE(checkKernelSimExecution) {
 	xacc::Finalize();
 }
 
-BOOST_AUTO_TEST_CASE(checkKernelPhysicalExecution) {
+TEST(IBMAcceleratorTester,checkKernelPhysicalExecution) {
 
         xacc::Initialize();
         xacc::setOption("ibm-api-key", "hello");
@@ -164,3 +165,7 @@ BOOST_AUTO_TEST_CASE(checkKernelPhysicalExecution) {
 
 }
 
+int main(int argc, char** argv) {
+   ::testing::InitGoogleTest(&argc, argv);
+   return RUN_ALL_TESTS();
+}
