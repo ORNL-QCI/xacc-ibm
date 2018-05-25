@@ -156,7 +156,7 @@ public:
 	 */
 	virtual std::shared_ptr<options_description> getOptions() {
 		auto desc = std::make_shared<options_description>(
-				"New IBM Accelerator Options");
+				"IBM Accelerator Options");
 		desc->add_options()("ibm-api-key", value<std::string>(),
 				"Provide the IBM API key. This is used if $HOME/.ibm_config is not found")("ibm-backend",
 				value<std::string>(),
@@ -184,7 +184,7 @@ public:
 			initialize();
 			XACCLogger::instance()->enqueueLog("");
 			for (auto s : availableBackends) {
-				XACCLogger::instance()->enqueueLog("Available New IBM Backend: " +
+				XACCLogger::instance()->enqueueLog("Available IBM Backend: " +
 						std::string(s.first) + " [" +
 						(s.second.status ? "on" : "off")
 						+ "]");

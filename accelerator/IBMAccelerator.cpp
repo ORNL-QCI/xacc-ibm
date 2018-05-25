@@ -70,7 +70,7 @@ std::vector<std::shared_ptr<IRTransformation>> IBMAccelerator::getIRTransformati
 
 	std::vector<std::shared_ptr<IRTransformation>> transformations;
 
-	std::string backendName = "ibmqx_qasm_simulator";
+	std::string backendName = "ibmq_qasm_simulator";
 
 	if (xacc::optionExists("ibm-backend")) {
 		backendName = xacc::getOption("ibm-backend");
@@ -154,7 +154,7 @@ void IBMAccelerator::initialize() {
 }
 
 bool IBMAccelerator::isPhysical() {
-	std::string backendName = "ibmqx_qasm_simulator";
+	std::string backendName = "ibmq_qasm_simulator";
 	if (xacc::optionExists("ibm-backend")) {
 		auto newBackend = xacc::getOption("ibm-backend");
 		if (availableBackends.find(newBackend) == availableBackends.end()) {
@@ -177,7 +177,7 @@ const std::string IBMAccelerator::processInput(
 	// Get the runtime options map, and initialize
 	// some basic variables we are going to need
 	auto options = RuntimeOptions::instance();
-	std::string backendName = "ibmqx_qasm_simulator";
+	std::string backendName = "ibmq_qasm_simulator";
 	std::string jsonStr = "{\"qasms\": [";
 	std::string shots = "1024";
 	std::map<std::string, std::string> headers;
@@ -402,7 +402,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 
 
 std::shared_ptr<AcceleratorGraph> IBMAccelerator::getAcceleratorConnectivity() {
-	std::string backendName = "ibmqx_qasm_simulator";
+	std::string backendName = "ibmq_qasm_simulator";
 
 	if (xacc::optionExists("ibm-backend")) {
 		backendName = xacc::getOption("ibm-backend");
