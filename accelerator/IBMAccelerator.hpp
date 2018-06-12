@@ -101,15 +101,6 @@ public:
 	 */
 	virtual std::shared_ptr<AcceleratorBuffer> createBuffer(
 				const std::string& varId);
-//
-//	virtual std::vector<std::shared_ptr<AcceleratorBuffer>> execute(
-//			std::shared_ptr<AcceleratorBuffer> buffer,
-//			const std::vector<std::shared_ptr<Function>> functions);
-//
-//	virtual void execute(std::shared_ptr<AcceleratorBuffer> buffer,
-//				const std::shared_ptr<Function> function) {
-//		RemoteAccelerator::Exe
-//	}
 	/**
 	 * Initialize this Accelerator. This method is called
 	 * by the XACC framework after an Accelerator has been
@@ -157,17 +148,12 @@ public:
 	virtual std::shared_ptr<options_description> getOptions() {
 		auto desc = std::make_shared<options_description>(
 				"IBM Accelerator Options");
-		desc->add_options()("ibm-api-key", value<std::string>(),
-				"Provide the IBM API key. This is used if $HOME/.ibm_config is not found")("ibm-backend",
-				value<std::string>(),
-				"Provide the backend name.")
+		desc->add_options()("ibm-api-key", value<std::string>(),"Provide the IBM API key. This is used if $HOME/.ibm_config is not found")
+				("ibm-api-url", "Specify the IBM Quantum Experience URL, overrides $HOME/.ibm_config .")
+				("ibm-backend",	value<std::string>(), "Provide the backend name.")
 				("ibm-shots", value<std::string>(), "Provide the number of shots to execute.")
 				("ibm-list-backends", "List the available backends at the IBM Quantum Experience URL.")
-				("ibm-api-url", "")("ibm-write-openqasm", "")
-				("ibm-correct-assignment-errors", "Indicate that we should run kernels first that compute "
-						"assignment error, and then correct for "
-						"that in computing expectation values.")
-						("ibm-assignment-error-shots", value<std::string>(), "");
+				("ibm-print-queue",value<std::string>(), "Print the status of the queue for the given backend");
 		return desc;
 	}
 
@@ -189,6 +175,13 @@ public:
 						(s.second.status ? "on" : "off")
 						+ "]");
 			}
+			return true;
+		} else if (map.count("ibm-print-queue")) {
+			initialize();
+			auto backend = map["ibm-print-queue"].as<std::string>();
+			XACCLogger::instance()->enqueueLog("");
+			XACCLogger::instance()->enqueueLog("Queue Status for " + backend +": " 
+					+ handleExceptionRestClientGet(remoteUrl, "/api/Backends/"+backend+"/queue/status"));
 			return true;
 		}
 		return false;

@@ -244,6 +244,21 @@ const std::string IBMAccelerator::processInput(
 	jsonStr += ", \"shots\": "+shots+", \"maxCredits\": 5, "
 			"\"backend\": {\"name\": \""+ backendName +"\"}}";
 
+	// Check that the qpu is online
+	if (backendName != "ibmq_qasm_simulator") {
+		std::string deviceResponse = handleExceptionRestClientGet(remoteUrl, "/api/Backends/"+backendName);
+		Document d;
+		d.Parse(deviceResponse);
+		std::string _status = d["status"].GetString();
+		while(_status != "on") {
+			xacc::info(backendName + " is offline. Please wait");
+			std::this_thread::sleep_for(std::chrono::milliseconds(400));
+			deviceResponse = handleExceptionRestClientGet(remoteUrl, "/api/Backends/"+backendName);
+			d.Parse(deviceResponse);
+			_status = d["status"].GetString();
+		}
+	}
+
 	return jsonStr;
 
 }
