@@ -36,7 +36,7 @@ grammar OQASM2;
 
 /* The main program */
 mainprog
-   : comment* OPENQASM real EOL program?
+   : comment* OPENQASM real ';' EOL program?
    ;
 
 /* The actual program statements */
@@ -45,18 +45,18 @@ program
    ;
 
 line
-   : statement EOL
+   : statement+ EOL
    | comment
-   | include EOL
+   | include+ EOL
    ;
 
 /* A program statement */
 statement
-   : regdecl
+   : regdecl ';'
    | gatedecl
-   | opaque
-   | qop
-   | conditional
+   | opaque ';'
+   | qop ';'
+   | conditional ';'
    ;
 
 /* A program comment */
@@ -66,7 +66,7 @@ comment
 
 /* An include statemnent */
 include
-   : 'include' filename 
+   : 'include' filename ';'
    ;
 
 filename
@@ -272,7 +272,7 @@ string
 
 /* Comment */
 COMMENT
-   : '//' ~ [\r\n]* 
+   : '//' ~ [\r\n]* EOL
    ;
 
 /* quantum register init opcode */
@@ -343,6 +343,6 @@ WS
 
 /* This is the end of the line, boys */
 EOL
-   : ';' '\r'? '\n'
+   : '\r'? '\n'
    ;
 
