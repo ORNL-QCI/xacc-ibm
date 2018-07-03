@@ -29,43 +29,23 @@
  *
  **********************************************************************************/
 #include <iostream>
-#include <IRProvider.hpp>
-#include <OQASM2BaseListener.h>
-
-#include "OQASM2Lexer.h"
-
-#include "XACC.hpp"
-#include "OQASMCompiler.hpp"
 #include "OQASMToXACCListener.hpp"
-
+#include "XACC.hpp"
 
 using namespace oqasm;
-using namespace antlr4;
-
 
 namespace xacc {
 
     namespace quantum {
 
-        OQASMCompiler::OQASMCompiler() {
+
+        OQASMToXACCListener::OQASMToXACCListener(std::shared_ptr<xacc::IR> ir) : ir(ir) {}
+
+
+        void OQASMToXACCListener::enterLine(OQASM2Parser::LineContext *ctx) {
+            std::cout << "it's a line\n";
         }
 
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src, std::shared_ptr<Accelerator> acc) {
-            accelerator = acc;
-            return compile(src);
-        }
-
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src) {
-            auto ir = xacc::getService<IRProvider>("gate")->createIR();
-
-            ANTLRInputStream input(src);
-            OQASM2Lexer lexer(&input);
-            CommonTokenStream tokens(&lexer);
-            OQASM2Parser parser(&tokens);
-
-            tree::ParseTree *tree = parser.mainprog();
-            OQASMToXACCListener listener(ir);
-            tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-        }
     }
+
 }

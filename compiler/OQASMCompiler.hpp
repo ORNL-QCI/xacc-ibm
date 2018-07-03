@@ -28,44 +28,70 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include <iostream>
-#include <IRProvider.hpp>
-#include <OQASM2BaseListener.h>
 
-#include "OQASM2Lexer.h"
-
-#include "XACC.hpp"
-#include "OQASMCompiler.hpp"
-#include "OQASMToXACCListener.hpp"
+#ifndef IMPLS_IBM_OQASMCOMPILER_HPP
+#define IMPLS_IBM_OQASMCOMPILER_HPP
 
 
-using namespace oqasm;
-using namespace antlr4;
+#include "Compiler.hpp"
+#include "Utils.hpp"
+#include <boost/algorithm/string.hpp>
 
 
 namespace xacc {
 
     namespace quantum {
 
-        OQASMCompiler::OQASMCompiler() {
-        }
+        class OQASMCompiler : public xacc::Compiler {
+        public:
 
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src, std::shared_ptr<Accelerator> acc) {
-            accelerator = acc;
-            return compile(src);
-        }
+            OQASMCompiler();
 
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src) {
-            auto ir = xacc::getService<IRProvider>("gate")->createIR();
+            /**
+             * Translate OpenQASM to the XACC intermediate representation.
+             *
+             * @return ir XACC intermediate representation
+             */
+            virtual std::shared_ptr<xacc::IR> compile(const std::string &src, std::shared_ptr<Accelerator> acc);
 
-            ANTLRInputStream input(src);
-            OQASM2Lexer lexer(&input);
-            CommonTokenStream tokens(&lexer);
-            OQASM2Parser parser(&tokens);
+            /**
+             *
+             * @param src
+             * @return ir
+             */
+            virtual std::shared_ptr<xacc::IR> compile(const std::string &src);
 
-            tree::ParseTree *tree = parser.mainprog();
-            OQASMToXACCListener listener(ir);
-            tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-        }
+            /**
+             * Return the name of this Compiler.
+             *
+             * @return name Compiler name
+             */
+            virtual const std::string getName() {
+                return "oqasm";
+            }
+
+            /**
+             * This produces an OpenQASM source code representation of the given IR Function.
+             *
+             * @param function The XACC IR Function to translate
+             * @return src The source code as a string
+             */
+            virtual const std::string translate(const std::string &bufferVariable, std::shared_ptr<Function> function);
+
+            virtual const std::string name() const {
+                return "oqasm";
+            }
+
+            virtual const std::string description() const {
+                return "The OpenQASM Compiler compiles kernels written in the OpenQASM intermediate language.";
+            }
+
+            /**
+             * The destructor
+             */
+            virtual ~OQASMCompiler() {}
     }
+
 }
+
+#endif

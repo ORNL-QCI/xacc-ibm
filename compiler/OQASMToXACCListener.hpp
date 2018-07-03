@@ -28,44 +28,28 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include <iostream>
-#include <IRProvider.hpp>
+#ifndef XACC_IBM_OQASMTOXACCLISTENER_H
+#define XACC_IBM_OQASMTOXACCLISTENER_H
+
 #include <OQASM2BaseListener.h>
-
-#include "OQASM2Lexer.h"
-
-#include "XACC.hpp"
-#include "OQASMCompiler.hpp"
-#include "OQASMToXACCListener.hpp"
-
+#include <IR.hpp>
 
 using namespace oqasm;
-using namespace antlr4;
-
 
 namespace xacc {
 
     namespace quantum {
 
-        OQASMCompiler::OQASMCompiler() {
-        }
+        class OQASMToXACCListener : public OQASM2BaseListener {
+            std::shared_ptr<IR> ir;
+        public:
+            explicit OQASMToXACCListener(std::shared_ptr<IR>);
 
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src, std::shared_ptr<Accelerator> acc) {
-            accelerator = acc;
-            return compile(src);
-        }
+            void enterLine(OQASM2Parser::LineContext *ctx) override;
+        };
 
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src) {
-            auto ir = xacc::getService<IRProvider>("gate")->createIR();
-
-            ANTLRInputStream input(src);
-            OQASM2Lexer lexer(&input);
-            CommonTokenStream tokens(&lexer);
-            OQASM2Parser parser(&tokens);
-
-            tree::ParseTree *tree = parser.mainprog();
-            OQASMToXACCListener listener(ir);
-            tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-        }
     }
+
 }
+
+#endif
