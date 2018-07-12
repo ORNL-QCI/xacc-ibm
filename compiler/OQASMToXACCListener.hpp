@@ -42,10 +42,14 @@ namespace xacc {
 
         class OQASMToXACCListener : public OQASM2BaseListener {
             std::shared_ptr<IR> ir;
+            std::shared_ptr<IRProvider> gateRegistry;
+            std::shared_ptr<Function> f;
         public:
+            std::shared_ptr<Function> getKernel();
+
             explicit OQASMToXACCListener(std::shared_ptr<IR>);
 
-            void enterLine(OQASM2Parser::LineContext *ctx) override;
+            void exitUop(OQASM2Parser::UopContext *ctx);
         };
 
     }

@@ -28,49 +28,43 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include <iostream>
-#include <IRProvider.hpp>
-#include <OQASM2BaseListener.h>
-
-#include "OQASM2Lexer.h"
-
-#include "XACC.hpp"
 #include "OQASMCompiler.hpp"
-#include "OQASMToXACCListener.hpp"
 
-using namespace oqasm;
-using namespace antlr4;
+#include "cppmicroservices/BundleActivator.h"
+#include "cppmicroservices/BundleContext.h"
+#include "cppmicroservices/ServiceProperties.h"
 
-namespace xacc {
+#include <memory>
+#include <set>
 
-    namespace quantum {
+using namespace cppmicroservices;
 
-        OQASMCompiler::OQASMCompiler() {
-        }
+namespace {
 
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src, std::shared_ptr<Accelerator> acc) {
-            accelerator = acc;
-            return compile(src);
-        }
+/**
+ */
+    class US_ABI_LOCAL OQASMCompilerActivator: public BundleActivator {
 
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src) {
-            auto ir = xacc::getService<IRProvider>("gate")->createIR();
+    public:
 
-            ANTLRInputStream input(src);
-            OQASM2Lexer lexer(&input);
-            CommonTokenStream tokens(&lexer);
-            OQASM2Parser parser(&tokens);
-
-            tree::ParseTree *tree = parser.mainprog();
-            OQASMToXACCListener listener(ir);
-            tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-
-            ir->addKernel(listener.getKernel());
-        }
-
-        const std::string OQASMCompiler::translate(const std::string &bufferVariable,
-                                             std::shared_ptr<xacc::Function> function) {
-            return "";
-        }
+    OQASMCompilerActivator() {
     }
+
+    /**
+     */
+    void Start(BundleContext context) {
+        auto c = std::make_shared<xacc::quantum::OQASMCompiler>();
+        context.RegisterService<xacc::Compiler>(c);
+        context.RegisterService<xacc::OptionsProvider>(c);
+    }
+
+    /**
+     */
+    void Stop(BundleContext /*context*/) {
+    }
+
+};
+
 }
+
+CPPMICROSERVICES_EXPORT_BUNDLE_ACTIVATOR(OQASMCompilerActivator)

@@ -29,23 +29,83 @@
  *
  **********************************************************************************/
 #include <iostream>
+#include <IRProvider.hpp>
+#include <boost/math/constants/constants.hpp>
+#include "exprtk.hpp"
 #include "OQASMToXACCListener.hpp"
 #include "XACC.hpp"
 
 using namespace oqasm;
+using symbol_table_t = exprtk::symbol_table<double>;
+using expression_t = exprtk::expression<double>;
+using parser_t = exprtk::parser<double>;
 
 namespace xacc {
 
     namespace quantum {
 
+        constexpr static double pi = boost::math::constants::pi<double>();
 
-        OQASMToXACCListener::OQASMToXACCListener(std::shared_ptr<xacc::IR> ir) : ir(ir) {}
-
-
-        void OQASMToXACCListener::enterLine(OQASM2Parser::LineContext *ctx) {
-            std::cout << "it's a line\n";
+        OQASMToXACCListener::OQASMToXACCListener(std::shared_ptr<xacc::IR> ir) : ir(ir) {
+            gateRegistry = xacc::getService<IRProvider>("gate");
+            f = gateRegistry->createFunction("main", {}, {});
         }
 
-    }
+        std::shared_ptr<Function> OQASMToXACCListener::getKernel() {
+            return f;
+        }
 
+        double evalMathExpression(std::string expression) {
+            symbol_table_t symbol_table;
+            symbol_table.add_constant("pi", pi);
+            expression_t expr;
+            expr.register_symbol_table(symbol_table);
+            parser_t parser;
+            parser.compile(expression, expr);
+            return expr.value();
+        }
+
+        double approxEquals(double a, double b, double tolerance=0.0001) {
+            return round(a / tolerance) == round(b / tolerance);
+        }
+
+        void OQASMToXACCListener::exitUop(oqasm::OQASM2Parser::UopContext *ctx) {
+            std::shared_ptr<xacc::Instruction> instruction;
+            std::vector<int> qubits;
+            std::vector<InstructionParameter> params;
+            std::string gateName;
+
+            if (ctx->op->getText() == "U") {
+                qubits.push_back(std::stoi(ctx->gatearg(0)->INT()->getText()));
+                auto theta = evalMathExpression(ctx->explist()->exp()->getText());
+                auto phi = evalMathExpression(ctx->explist()->explist()->exp()->getText());
+                auto lambda = evalMathExpression(ctx->explist()->explist()->explist()->exp()->getText());
+
+                if (approxEquals(phi, -pi / 2.0) && approxEquals(lambda, pi / 2.0)) {
+                    gateName = "Rx";
+                    params.push_back(theta);
+                } else if (phi == 0 && lambda == 0) {
+                    gateName = "Ry";
+                    params.push_back(theta);
+                } else if (theta == 0 && phi == 0) {
+                    gateName = "Rz";
+                    params.push_back(lambda);
+                } else {
+                    xacc::error("General single qubit gate not supported. Only Rx, Ry, and Rz supported.");
+                }
+            } else if (ctx->op->getText() == "CX") {
+                gateName = "CNOT";
+                qubits.push_back(std::stoi(ctx->gatearg(0)->INT()->getText()));
+                qubits.push_back(std::stoi(ctx->gatearg(1)->INT()->getText()));
+            } else {
+                xacc::error("User-defined gates not yet supported.");
+            }
+
+            instruction = gateRegistry->createInstruction(gateName, qubits);
+            for (int i = 0; i < params.size(); i++) {
+                instruction->setParameter(i, params[i]);
+            }
+            f->addInstruction(instruction);
+        }
+    }
 }

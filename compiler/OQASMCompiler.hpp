@@ -28,10 +28,8 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-
 #ifndef IMPLS_IBM_OQASMCOMPILER_HPP
 #define IMPLS_IBM_OQASMCOMPILER_HPP
-
 
 #include "Compiler.hpp"
 #include "Utils.hpp"
@@ -90,8 +88,9 @@ namespace xacc {
              * The destructor
              */
             virtual ~OQASMCompiler() {}
+        };
+
     }
 
 }
-
 #endif

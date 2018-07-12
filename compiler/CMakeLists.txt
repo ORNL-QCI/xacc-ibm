@@ -34,14 +34,14 @@ set (PACKAGE_DESCRIPTION "IBM OpenQASM XACC Compiler Bundle")
 set (LIBRARY_NAME xacc-ibm-oqasmcompiler)
 
 file (GLOB_RECURSE HEADERS *.hpp)
-file (GLOB SRC *.cpp)
+file (GLOB SRC *.cpp generated/*.cpp)
 
 # Set up dependencies to resources to track changes
 usFunctionGetResourceSource(TARGET ${LIBRARY_NAME} OUT SRC)
 # Generate bundle initialization code
 usFunctionGenerateBundleInit(TARGET ${LIBRARY_NAME} OUT SRC)
 
-add_library(${LIBRARY_NAME} SHARED ${SRC} OQASMCompiler.hpp OQASMToXACCListener.cpp OQASMToXACCListener.hpp)
+add_library(${LIBRARY_NAME} SHARED ${SRC})# OQASMCompiler.cpp OQASMToXACCListener.cpp OQASMToXACCListener.hpp)
 
 set(_bundle_name xacc_ibm_oqasmcompiler)
 
@@ -131,9 +131,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     target_compile_options(xacc_ibm_oqasmcompiler PRIVATE "/MT$<$<CONFIG:Debug>:d>")
 endif()
 
-add_dependencies(${LIBRARY_NAME} GenerateParser)
+#add_dependencies(${LIBRARY_NAME} GenerateParser)
 
 target_link_libraries(${LIBRARY_NAME} antlr4_static)
+
 
 # XACC setup
 
