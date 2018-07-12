@@ -19,7 +19,7 @@ public:
     T__20 = 21, T__21 = 22, T__22 = 23, T__23 = 24, T__24 = 25, T__25 = 26, 
     COMMENT = 27, QREG = 28, CREG = 29, GATE = 30, MEASURE = 31, RESET = 32, 
     BARRIER = 33, OPENQASM = 34, OPAQUE = 35, ID = 36, REAL = 37, INT = 38, 
-    STRING = 39, WS = 40, EOL = 41
+    STRING = 39, EOL = 40, WS = 41
   };
 
   OQASM2Lexer(antlr4::CharStream *input);

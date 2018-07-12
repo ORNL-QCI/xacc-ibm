@@ -124,7 +124,7 @@ gatebody
 
 /* The program defining the gate */
 gateprog
-   : gateline+
+   : gateline*
    ;
 
 /* statements in the gateprog must be semicolon terminated */
@@ -176,8 +176,8 @@ qop
 
 /* A unitary operation */
 uop
-   : 'U' '(' explist? ')' gatearg
-   | 'CX' gatearg ',' gatearg
+   : op='U' '(' explist? ')' gatearg
+   | op='CX' gatearg ',' gatearg
    | gatename ( '(' explist ')' )? gatearglist
    ;
 
@@ -336,13 +336,12 @@ STRING
    : '"' ~ ["]* '"'
    ;
 
+/* This is the end of the line, boys */
+EOL
+: '\r'? '\n'
+;
+
 /* Whitespaces, we skip'em */
 WS
    : [ \t\r\n] -> skip
    ;
-
-/* This is the end of the line, boys */
-EOL
-   : '\r'? '\n'
-   ;
-
