@@ -91,8 +91,14 @@ public:
   virtual void enterQop(OQASM2Parser::QopContext *ctx) = 0;
   virtual void exitQop(OQASM2Parser::QopContext *ctx) = 0;
 
-  virtual void enterUop(OQASM2Parser::UopContext *ctx) = 0;
-  virtual void exitUop(OQASM2Parser::UopContext *ctx) = 0;
+  virtual void enterU(OQASM2Parser::UContext *ctx) = 0;
+  virtual void exitU(OQASM2Parser::UContext *ctx) = 0;
+
+  virtual void enterCX(OQASM2Parser::CXContext *ctx) = 0;
+  virtual void exitCX(OQASM2Parser::CXContext *ctx) = 0;
+
+  virtual void enterUserDefGate(OQASM2Parser::UserDefGateContext *ctx) = 0;
+  virtual void exitUserDefGate(OQASM2Parser::UserDefGateContext *ctx) = 0;
 
   virtual void enterConditional(OQASM2Parser::ConditionalContext *ctx) = 0;
   virtual void exitConditional(OQASM2Parser::ConditionalContext *ctx) = 0;

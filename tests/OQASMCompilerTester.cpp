@@ -31,6 +31,7 @@
 #include <gtest/gtest.h>
 #include "OpenQasmVisitor.hpp"
 #include "OQASMCompiler.hpp"
+#include "CountGatesOfTypeVisitor.hpp"
 
 using namespace xacc;
 
@@ -46,23 +47,31 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
             "qreg q[3];\n"
             "creg c[3];\n"
             "// optional post-rotation for state tomography\n"
-            "gate post q { }\n"
-            "U(0.3,0.2,0.1) q[0];\n"
+            //"gate post q { }\n"
+            //"U(0.3,0.2,0.1) q[0];\n"
             "h q[1];\n"
-            "cx q[1],q[2];\n"
+            "CX q[1],q[2];\n"
             "barrier q;\n"
-            "cx q[0],q[1];\n"
+            "CX q[0],q[1];\n"
             "h q[0];\n"
             "measure q[0] -> c[0];\n"
             "measure q[1] -> c[1];\n"
-            "post q[2];\n"
+            //"post q[2];\n"
             "measure q[2] -> c[2];\n");
 
     auto compiler = std::make_shared<OQASMCompiler>();
     auto ir = compiler->compile(src);
 
     auto function = ir->getKernel("main");
-    std::cout << "N: " << function->nInstructions() << "\n";
+    std::cout << "N: " << function->nInstructions() << std::endl;
 
     EXPECT_TRUE(ir->getKernels().size() == 1);
+
+    auto hadamardVisitor = std::make_shared<CountGatesOfTypeVisitor<Hadamard>>(function);
+    auto cnotVisitor = std::make_shared<CountGatesOfTypeVisitor<CNOT>>(function);
+    auto xVisitor = std::make_shared<CountGatesOfTypeVisitor<X>>(function);
+
+    EXPECT_TRUE(hadamardVisitor->countGates() == 2);
+    EXPECT_TRUE(cnotVisitor->countGates() == 2);
+    EXPECT_TRUE(xVisitor->countGates() == 0);
 }

@@ -176,9 +176,9 @@ qop
 
 /* A unitary operation */
 uop
-   : op='U' '(' explist? ')' gatearg
-   | op='CX' gatearg ',' gatearg
-   | gatename ( '(' explist ')' )? gatearglist
+   : 'U' '(' explist? ')' gatearg                   # U
+   | 'CX' gatearg ',' gatearg                       # CX
+   | gatename ( '(' explist ')' )? gatearglist      # UserDefGate
    ;
 
 /* A classical conditional expression */

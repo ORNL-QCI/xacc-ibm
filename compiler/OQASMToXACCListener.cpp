@@ -46,7 +46,7 @@ namespace xacc {
 
         constexpr static double pi = boost::math::constants::pi<double>();
 
-        OQASMToXACCListener::OQASMToXACCListener(std::shared_ptr<xacc::IR> ir) : ir(ir) {
+        OQASMToXACCListener::OQASMToXACCListener() {
             gateRegistry = xacc::getService<IRProvider>("gate");
             f = gateRegistry->createFunction("main", {}, {});
         }
@@ -55,7 +55,7 @@ namespace xacc {
             return f;
         }
 
-        double evalMathExpression(std::string expression) {
+        double evalMathExpression(const std::string &expression) {
             symbol_table_t symbol_table;
             symbol_table.add_constant("pi", pi);
             expression_t expr;
@@ -69,42 +69,53 @@ namespace xacc {
             return round(a / tolerance) == round(b / tolerance);
         }
 
-        void OQASMToXACCListener::exitUop(oqasm::OQASM2Parser::UopContext *ctx) {
-            std::shared_ptr<xacc::Instruction> instruction;
+        void OQASMToXACCListener::exitU(oqasm::OQASM2Parser::UContext *ctx) {
             std::vector<int> qubits;
             std::vector<InstructionParameter> params;
             std::string gateName;
 
-            if (ctx->op->getText() == "U") {
-                qubits.push_back(std::stoi(ctx->gatearg(0)->INT()->getText()));
-                auto theta = evalMathExpression(ctx->explist()->exp()->getText());
-                auto phi = evalMathExpression(ctx->explist()->explist()->exp()->getText());
-                auto lambda = evalMathExpression(ctx->explist()->explist()->explist()->exp()->getText());
+            qubits.push_back(std::stoi(ctx->gatearg()->INT()->getText()));
+            auto theta = evalMathExpression(ctx->explist()->exp()->getText());
+            auto phi = evalMathExpression(ctx->explist()->explist()->exp()->getText());
+            auto lambda = evalMathExpression(ctx->explist()->explist()->explist()->exp()->getText());
 
-                if (approxEquals(phi, -pi / 2.0) && approxEquals(lambda, pi / 2.0)) {
-                    gateName = "Rx";
-                    params.push_back(theta);
-                } else if (phi == 0 && lambda == 0) {
-                    gateName = "Ry";
-                    params.push_back(theta);
-                } else if (theta == 0 && phi == 0) {
-                    gateName = "Rz";
-                    params.push_back(lambda);
-                } else {
-                    xacc::error("General single qubit gate not supported. Only Rx, Ry, and Rz supported.");
-                }
-            } else if (ctx->op->getText() == "CX") {
-                gateName = "CNOT";
-                qubits.push_back(std::stoi(ctx->gatearg(0)->INT()->getText()));
-                qubits.push_back(std::stoi(ctx->gatearg(1)->INT()->getText()));
+            if (approxEquals(phi, -pi / 2.0) && approxEquals(lambda, pi / 2.0)) {
+                gateName = "Rx";
+                params.push_back(theta);
+            } else if (phi == 0 && lambda == 0) {
+                gateName = "Ry";
+                params.push_back(theta);
+            } else if (theta == 0 && phi == 0) {
+                gateName = "Rz";
+                params.push_back(lambda);
             } else {
-                xacc::error("User-defined gates not yet supported.");
+                xacc::error("General single qubit gate 'U' not yet supported.");
             }
 
-            instruction = gateRegistry->createInstruction(gateName, qubits);
+            std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction(gateName, qubits);
             for (int i = 0; i < params.size(); i++) {
                 instruction->setParameter(i, params[i]);
             }
+            f->addInstruction(instruction);
+        }
+
+        void OQASMToXACCListener::exitCX(oqasm::OQASM2Parser::CXContext *ctx) {
+            std::vector<int> qubits;
+            qubits.push_back(std::stoi(ctx->gatearg(0)->INT()->getText()));
+            qubits.push_back(std::stoi(ctx->gatearg(1)->INT()->getText()));
+
+            std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction("CNOT", qubits);
+            f->addInstruction(instruction);
+        }
+
+        void OQASMToXACCListener::exitUserDefGate(oqasm::OQASM2Parser::UserDefGateContext *ctx) {
+            std::string gateName = ctx->gatename()->id()->getText();
+            gateName[0] = static_cast<char>(toupper(gateName[0]));
+            std::vector<int> qubits;
+            // TODO: check for params
+            qubits.push_back(std::stoi(ctx->gatearglist()->gatearg()->INT()->getText()));
+
+            std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction(gateName, qubits);
             f->addInstruction(instruction);
         }
     }

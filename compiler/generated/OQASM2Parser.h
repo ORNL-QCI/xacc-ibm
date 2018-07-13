@@ -452,18 +452,46 @@ public:
 
   class  UopContext : public antlr4::ParserRuleContext {
   public:
-    antlr4::Token *op = nullptr;;
     UopContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    std::vector<GateargContext *> gatearg();
-    GateargContext* gatearg(size_t i);
-    ExplistContext *explist();
-    GatenameContext *gatename();
-    GatearglistContext *gatearglist();
+   
+    UopContext() : antlr4::ParserRuleContext() { }
+    void copyFrom(UopContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
 
+    virtual size_t getRuleIndex() const override;
+
+   
+  };
+
+  class  UContext : public UopContext {
+  public:
+    UContext(UopContext *ctx);
+
+    GateargContext *gatearg();
+    ExplistContext *explist();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
+  };
+
+  class  CXContext : public UopContext {
+  public:
+    CXContext(UopContext *ctx);
+
+    std::vector<GateargContext *> gatearg();
+    GateargContext* gatearg(size_t i);
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  class  UserDefGateContext : public UopContext {
+  public:
+    UserDefGateContext(UopContext *ctx);
+
+    GatenameContext *gatename();
+    GatearglistContext *gatearglist();
+    ExplistContext *explist();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };
 
   UopContext* uop();

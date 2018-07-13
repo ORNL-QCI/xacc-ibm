@@ -1858,43 +1858,85 @@ OQASM2Parser::UopContext::UopContext(ParserRuleContext *parent, size_t invokingS
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<OQASM2Parser::GateargContext *> OQASM2Parser::UopContext::gatearg() {
-  return getRuleContexts<OQASM2Parser::GateargContext>();
-}
-
-OQASM2Parser::GateargContext* OQASM2Parser::UopContext::gatearg(size_t i) {
-  return getRuleContext<OQASM2Parser::GateargContext>(i);
-}
-
-OQASM2Parser::ExplistContext* OQASM2Parser::UopContext::explist() {
-  return getRuleContext<OQASM2Parser::ExplistContext>(0);
-}
-
-OQASM2Parser::GatenameContext* OQASM2Parser::UopContext::gatename() {
-  return getRuleContext<OQASM2Parser::GatenameContext>(0);
-}
-
-OQASM2Parser::GatearglistContext* OQASM2Parser::UopContext::gatearglist() {
-  return getRuleContext<OQASM2Parser::GatearglistContext>(0);
-}
-
 
 size_t OQASM2Parser::UopContext::getRuleIndex() const {
   return OQASM2Parser::RuleUop;
 }
 
-void OQASM2Parser::UopContext::enterRule(tree::ParseTreeListener *listener) {
-  auto parserListener = dynamic_cast<OQASM2Listener *>(listener);
-  if (parserListener != nullptr)
-    parserListener->enterUop(this);
+void OQASM2Parser::UopContext::copyFrom(UopContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
 }
 
-void OQASM2Parser::UopContext::exitRule(tree::ParseTreeListener *listener) {
-  auto parserListener = dynamic_cast<OQASM2Listener *>(listener);
-  if (parserListener != nullptr)
-    parserListener->exitUop(this);
+//----------------- UContext ------------------------------------------------------------------
+
+OQASM2Parser::GateargContext* OQASM2Parser::UContext::gatearg() {
+  return getRuleContext<OQASM2Parser::GateargContext>(0);
 }
 
+OQASM2Parser::ExplistContext* OQASM2Parser::UContext::explist() {
+  return getRuleContext<OQASM2Parser::ExplistContext>(0);
+}
+
+OQASM2Parser::UContext::UContext(UopContext *ctx) { copyFrom(ctx); }
+
+void OQASM2Parser::UContext::enterRule(tree::ParseTreeListener *listener) {
+  auto parserListener = dynamic_cast<OQASM2Listener *>(listener);
+  if (parserListener != nullptr)
+    parserListener->enterU(this);
+}
+void OQASM2Parser::UContext::exitRule(tree::ParseTreeListener *listener) {
+  auto parserListener = dynamic_cast<OQASM2Listener *>(listener);
+  if (parserListener != nullptr)
+    parserListener->exitU(this);
+}
+//----------------- CXContext ------------------------------------------------------------------
+
+std::vector<OQASM2Parser::GateargContext *> OQASM2Parser::CXContext::gatearg() {
+  return getRuleContexts<OQASM2Parser::GateargContext>();
+}
+
+OQASM2Parser::GateargContext* OQASM2Parser::CXContext::gatearg(size_t i) {
+  return getRuleContext<OQASM2Parser::GateargContext>(i);
+}
+
+OQASM2Parser::CXContext::CXContext(UopContext *ctx) { copyFrom(ctx); }
+
+void OQASM2Parser::CXContext::enterRule(tree::ParseTreeListener *listener) {
+  auto parserListener = dynamic_cast<OQASM2Listener *>(listener);
+  if (parserListener != nullptr)
+    parserListener->enterCX(this);
+}
+void OQASM2Parser::CXContext::exitRule(tree::ParseTreeListener *listener) {
+  auto parserListener = dynamic_cast<OQASM2Listener *>(listener);
+  if (parserListener != nullptr)
+    parserListener->exitCX(this);
+}
+//----------------- UserDefGateContext ------------------------------------------------------------------
+
+OQASM2Parser::GatenameContext* OQASM2Parser::UserDefGateContext::gatename() {
+  return getRuleContext<OQASM2Parser::GatenameContext>(0);
+}
+
+OQASM2Parser::GatearglistContext* OQASM2Parser::UserDefGateContext::gatearglist() {
+  return getRuleContext<OQASM2Parser::GatearglistContext>(0);
+}
+
+OQASM2Parser::ExplistContext* OQASM2Parser::UserDefGateContext::explist() {
+  return getRuleContext<OQASM2Parser::ExplistContext>(0);
+}
+
+OQASM2Parser::UserDefGateContext::UserDefGateContext(UopContext *ctx) { copyFrom(ctx); }
+
+void OQASM2Parser::UserDefGateContext::enterRule(tree::ParseTreeListener *listener) {
+  auto parserListener = dynamic_cast<OQASM2Listener *>(listener);
+  if (parserListener != nullptr)
+    parserListener->enterUserDefGate(this);
+}
+void OQASM2Parser::UserDefGateContext::exitRule(tree::ParseTreeListener *listener) {
+  auto parserListener = dynamic_cast<OQASM2Listener *>(listener);
+  if (parserListener != nullptr)
+    parserListener->exitUserDefGate(this);
+}
 OQASM2Parser::UopContext* OQASM2Parser::uop() {
   UopContext *_localctx = _tracker.createInstance<UopContext>(_ctx, getState());
   enterRule(_localctx, 50, OQASM2Parser::RuleUop);
@@ -1908,9 +1950,10 @@ OQASM2Parser::UopContext* OQASM2Parser::uop() {
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case OQASM2Parser::T__10: {
+        _localctx = dynamic_cast<UopContext *>(_tracker.createInstance<OQASM2Parser::UContext>(_localctx));
         enterOuterAlt(_localctx, 1);
         setState(251);
-        dynamic_cast<UopContext *>(_localctx)->op = match(OQASM2Parser::T__10);
+        match(OQASM2Parser::T__10);
         setState(252);
         match(OQASM2Parser::T__4);
         setState(254);
@@ -1941,9 +1984,10 @@ OQASM2Parser::UopContext* OQASM2Parser::uop() {
       }
 
       case OQASM2Parser::T__11: {
+        _localctx = dynamic_cast<UopContext *>(_tracker.createInstance<OQASM2Parser::CXContext>(_localctx));
         enterOuterAlt(_localctx, 2);
         setState(258);
-        dynamic_cast<UopContext *>(_localctx)->op = match(OQASM2Parser::T__11);
+        match(OQASM2Parser::T__11);
         setState(259);
         gatearg();
         setState(260);
@@ -1954,6 +1998,7 @@ OQASM2Parser::UopContext* OQASM2Parser::uop() {
       }
 
       case OQASM2Parser::ID: {
+        _localctx = dynamic_cast<UopContext *>(_tracker.createInstance<OQASM2Parser::UserDefGateContext>(_localctx));
         enterOuterAlt(_localctx, 3);
         setState(263);
         gatename();

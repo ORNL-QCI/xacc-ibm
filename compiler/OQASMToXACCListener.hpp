@@ -47,9 +47,13 @@ namespace xacc {
         public:
             std::shared_ptr<Function> getKernel();
 
-            explicit OQASMToXACCListener(std::shared_ptr<IR>);
+            explicit OQASMToXACCListener();
 
-            void exitUop(OQASM2Parser::UopContext *ctx);
+            void exitU(OQASM2Parser::UContext *ctx);
+
+            void exitCX(OQASM2Parser::CXContext *ctx);
+
+            void exitUserDefGate(OQASM2Parser::UserDefGateContext *ctx);
         };
 
     }

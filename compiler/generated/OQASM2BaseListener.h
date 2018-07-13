@@ -93,8 +93,14 @@ public:
   virtual void enterQop(OQASM2Parser::QopContext * /*ctx*/) override { }
   virtual void exitQop(OQASM2Parser::QopContext * /*ctx*/) override { }
 
-  virtual void enterUop(OQASM2Parser::UopContext * /*ctx*/) override { }
-  virtual void exitUop(OQASM2Parser::UopContext * /*ctx*/) override { }
+  virtual void enterU(OQASM2Parser::UContext * /*ctx*/) override { }
+  virtual void exitU(OQASM2Parser::UContext * /*ctx*/) override { }
+
+  virtual void enterCX(OQASM2Parser::CXContext * /*ctx*/) override { }
+  virtual void exitCX(OQASM2Parser::CXContext * /*ctx*/) override { }
+
+  virtual void enterUserDefGate(OQASM2Parser::UserDefGateContext * /*ctx*/) override { }
+  virtual void exitUserDefGate(OQASM2Parser::UserDefGateContext * /*ctx*/) override { }
 
   virtual void enterConditional(OQASM2Parser::ConditionalContext * /*ctx*/) override { }
   virtual void exitConditional(OQASM2Parser::ConditionalContext * /*ctx*/) override { }

@@ -54,18 +54,18 @@ namespace xacc {
         }
 
         std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src) {
-            auto ir = xacc::getService<IRProvider>("gate")->createIR();
-
             ANTLRInputStream input(src);
             OQASM2Lexer lexer(&input);
             CommonTokenStream tokens(&lexer);
             OQASM2Parser parser(&tokens);
 
             tree::ParseTree *tree = parser.mainprog();
-            OQASMToXACCListener listener(ir);
+            OQASMToXACCListener listener;
             tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
 
+            auto ir = xacc::getService<IRProvider>("gate")->createIR();
             ir->addKernel(listener.getKernel());
+            return ir;
         }
 
         const std::string OQASMCompiler::translate(const std::string &bufferVariable,
