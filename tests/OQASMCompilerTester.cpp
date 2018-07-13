@@ -41,7 +41,7 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     xacc::Initialize();
 
     const std::string src(
-            "// quantum teleportation example\n"
+            "// nonsense\n"
             "OPENQASM 2.0;\n"
             "include \"qelib1.inc\";\n"
             "qreg q[3];\n"
@@ -50,6 +50,8 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
             //"gate post q { }\n"
             //"U(0.3,0.2,0.1) q[0];\n"
             "h q[1];\n"
+            "x q[0];\n"
+            "y q[2];\n"
             "CX q[1],q[2];\n"
             "barrier q;\n"
             "CX q[0],q[1];\n"
@@ -70,8 +72,12 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     auto hadamardVisitor = std::make_shared<CountGatesOfTypeVisitor<Hadamard>>(function);
     auto cnotVisitor = std::make_shared<CountGatesOfTypeVisitor<CNOT>>(function);
     auto xVisitor = std::make_shared<CountGatesOfTypeVisitor<X>>(function);
+    auto yVisitor = std::make_shared<CountGatesOfTypeVisitor<Y>>(function);
+    auto measureVisitor = std::make_shared<CountGatesOfTypeVisitor<Measure>>(function);
 
     EXPECT_TRUE(hadamardVisitor->countGates() == 2);
     EXPECT_TRUE(cnotVisitor->countGates() == 2);
-    EXPECT_TRUE(xVisitor->countGates() == 0);
+    EXPECT_TRUE(xVisitor->countGates() == 1);
+    EXPECT_TRUE(yVisitor->countGates() == 1);
+    EXPECT_TRUE(measureVisitor->countGates() == 3);
 }

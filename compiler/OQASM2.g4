@@ -27,6 +27,9 @@
  * Originally devloped by:
  * Travis Humble, Oak Ridge National Laboratory, March 2017
  *
+ * Updated by:
+ * H. Charles Zhao, Oak Ridge National Laboratory, July 2018
+ *
  * An ANTLR4 specification for Version 2.0 of the IBM Open QASM Grammar 
  * See https://github.com/IBM/qiskit-openqasm for the written spec
  *
@@ -169,9 +172,9 @@ opaquearg
 */
 qop
    : uop
-   | reeset qregister
-   | measure qregister '->' cregister
-   | barrier gatearglist
+   | reeset
+   | measure
+   | barrier
    ;
 
 /* A unitary operation */
@@ -240,17 +243,17 @@ gate
 
 /* A measure declaration */
 measure
-   : MEASURE
+   : MEASURE (qubit = gatearg | qregister) '->' (cbit = gatearg | cregister)
    ;
 
 /* A reset declaration */
 reeset
-   : RESET
+   : RESET (gatearg | qregister | cregister)
    ;
 
 /* A barrier declaration */
 barrier
-   : BARRIER
+   : BARRIER gatearglist
    ;
 
 /* variable identity */

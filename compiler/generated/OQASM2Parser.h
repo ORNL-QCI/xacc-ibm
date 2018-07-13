@@ -437,11 +437,8 @@ public:
     virtual size_t getRuleIndex() const override;
     UopContext *uop();
     ReesetContext *reeset();
-    QregisterContext *qregister();
     MeasureContext *measure();
-    CregisterContext *cregister();
     BarrierContext *barrier();
-    GatearglistContext *gatearglist();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -609,9 +606,15 @@ public:
 
   class  MeasureContext : public antlr4::ParserRuleContext {
   public:
+    OQASM2Parser::GateargContext *qubit = nullptr;;
+    OQASM2Parser::GateargContext *cbit = nullptr;;
     MeasureContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *MEASURE();
+    QregisterContext *qregister();
+    CregisterContext *cregister();
+    std::vector<GateargContext *> gatearg();
+    GateargContext* gatearg(size_t i);
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -625,6 +628,9 @@ public:
     ReesetContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *RESET();
+    GateargContext *gatearg();
+    QregisterContext *qregister();
+    CregisterContext *cregister();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -638,6 +644,7 @@ public:
     BarrierContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *BARRIER();
+    GatearglistContext *gatearglist();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

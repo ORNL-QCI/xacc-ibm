@@ -45,8 +45,7 @@ namespace xacc {
 
     namespace quantum {
 
-        OQASMCompiler::OQASMCompiler() {
-        }
+        OQASMCompiler::OQASMCompiler() = default;
 
         std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src, std::shared_ptr<Accelerator> acc) {
             accelerator = acc;

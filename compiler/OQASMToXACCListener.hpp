@@ -49,11 +49,13 @@ namespace xacc {
 
             explicit OQASMToXACCListener();
 
-            void exitU(OQASM2Parser::UContext *ctx);
+            void exitU(OQASM2Parser::UContext *ctx) override;
 
-            void exitCX(OQASM2Parser::CXContext *ctx);
+            void exitCX(OQASM2Parser::CXContext *ctx) override;
 
-            void exitUserDefGate(OQASM2Parser::UserDefGateContext *ctx);
+            void exitUserDefGate(OQASM2Parser::UserDefGateContext *ctx) override;
+
+            void exitMeasure(OQASM2Parser::MeasureContext *ctx) override;
         };
 
     }
