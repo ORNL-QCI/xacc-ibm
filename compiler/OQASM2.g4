@@ -196,8 +196,7 @@ action
 
 /* A list of expressions */
 explist
-   : exp
-   | exp ',' explist
+   : exp ( ',' exp )*
    ;
 
 /* An expression */

@@ -70,9 +70,9 @@ namespace xacc {
             std::vector<InstructionParameter> params;
 
             qubits.push_back(std::stoi(ctx->gatearg()->INT()->getText()));
-            params.push_back(evalMathExpression(ctx->explist()->exp()->getText()));  // theta
-            params.push_back(evalMathExpression(ctx->explist()->explist()->exp()->getText()));  // phi
-            params.push_back(evalMathExpression(ctx->explist()->explist()->explist()->exp()->getText()));  // lambda
+            params.push_back(evalMathExpression(ctx->explist()->exp(0)->getText()));  // theta
+            params.push_back(evalMathExpression(ctx->explist()->exp(1)->getText()));  // phi
+            params.push_back(evalMathExpression(ctx->explist()->exp(2)->getText()));  // lambda
 
             std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction("U3", qubits);
             for (int i = 0; i < params.size(); i++) {
@@ -94,10 +94,18 @@ namespace xacc {
             std::string gateName = ctx->gatename()->id()->getText();
             gateName[0] = static_cast<char>(toupper(gateName[0]));
             std::vector<int> qubits;
-            // TODO: check for params
+            std::vector<InstructionParameter> params;
+
             qubits.push_back(std::stoi(ctx->gatearglist()->gatearg()->INT()->getText()));
 
             std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction(gateName, qubits);
+            if (ctx->explist() != nullptr) {
+                for (int i = 0; i < ctx->explist()->exp().size(); i++) {
+                    params.push_back(evalMathExpression(ctx->explist()->exp(static_cast<size_t>(i))->getText()));
+                    instruction->setParameter(i, params[i]);
+                }
+            }
+
             f->addInstruction(instruction);
         }
 

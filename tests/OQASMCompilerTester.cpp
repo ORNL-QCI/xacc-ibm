@@ -54,6 +54,7 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
             "h q[1];\n"
             "x q[0];\n"
             "y q[2];\n"
+            "rx(3.14) q[1];\n"
             "CX q[1],q[2];\n"
             "barrier q;\n"
             "CX q[0],q[1];\n"
@@ -76,6 +77,7 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     auto xVisitor = std::make_shared<CountGatesOfTypeVisitor<X>>(function);
     auto yVisitor = std::make_shared<CountGatesOfTypeVisitor<Y>>(function);
     auto uVisitor = std::make_shared<CountGatesOfTypeVisitor<U3>>(function);
+    auto rxVisitor = std::make_shared<CountGatesOfTypeVisitor<Rx>>(function);
     auto measureVisitor = std::make_shared<CountGatesOfTypeVisitor<Measure>>(function);
 
     EXPECT_TRUE(hadamardVisitor->countGates() == 2);
@@ -83,5 +85,6 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     EXPECT_TRUE(xVisitor->countGates() == 1);
     EXPECT_TRUE(yVisitor->countGates() == 1);
     EXPECT_TRUE(uVisitor->countGates() == 2);
+    EXPECT_TRUE(rxVisitor->countGates() == 1);
     EXPECT_TRUE(measureVisitor->countGates() == 3);
 }
