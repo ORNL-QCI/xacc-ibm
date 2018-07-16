@@ -31,6 +31,7 @@
 #include <iostream>
 #include <IRProvider.hpp>
 #include <OQASM2BaseListener.h>
+#include <OpenQasmVisitor.hpp>
 
 #include "OQASM2Lexer.h"
 
@@ -69,7 +70,15 @@ namespace xacc {
 
         const std::string OQASMCompiler::translate(const std::string &bufferVariable,
                                              std::shared_ptr<xacc::Function> function) {
-            return "";
+            auto visitor = std::make_shared<OpenQasmVisitor>();
+            InstructionIterator it(function);
+            while (it.hasNext()) {
+                auto nextInst = it.next();
+                if (nextInst->isEnabled()) {
+                    nextInst->accept(visitor);
+                }
+            }
+            return visitor->getOpenQasmString();
         }
     }
 }
