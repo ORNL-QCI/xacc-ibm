@@ -41,7 +41,7 @@ usFunctionGetResourceSource(TARGET ${LIBRARY_NAME} OUT SRC)
 # Generate bundle initialization code
 usFunctionGenerateBundleInit(TARGET ${LIBRARY_NAME} OUT SRC)
 
-add_library(${LIBRARY_NAME} SHARED ${SRC})# OQASMCompiler.cpp OQASMToXACCListener.cpp OQASMToXACCListener.hpp)
+add_library(${LIBRARY_NAME} SHARED ${SRC})
 
 set(_bundle_name xacc_ibm_oqasmcompiler)
 

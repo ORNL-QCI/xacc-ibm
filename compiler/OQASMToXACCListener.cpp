@@ -121,7 +121,7 @@ namespace xacc {
 
         void OQASMToXACCListener::exitMeasure(oqasm::OQASM2Parser::MeasureContext *ctx) {
             std::vector<int> qubits;
-            qubits.push_back(std::stoi(ctx->qubit->INT()->getText()));
+            qubits.push_back(std::stoi(ctx->qbit->INT()->getText()));
             int classicalBit = std::stoi(ctx->cbit->INT()->getText());
 
             std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction("Measure", qubits, {InstructionParameter(classicalBit)});

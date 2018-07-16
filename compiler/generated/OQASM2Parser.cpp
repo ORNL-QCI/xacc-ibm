@@ -2691,7 +2691,7 @@ OQASM2Parser::MeasureContext* OQASM2Parser::measure() {
     switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 28, _ctx)) {
     case 1: {
       setState(330);
-      dynamic_cast<MeasureContext *>(_localctx)->qubit = gatearg();
+      dynamic_cast<MeasureContext *>(_localctx)->qbit = gatearg();
       break;
     }
 

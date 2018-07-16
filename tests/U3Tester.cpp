@@ -28,47 +28,32 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include "OQASMCompiler.hpp"
+#include <gtest/gtest.h>
 #include "U3.hpp"
 
-#include "cppmicroservices/BundleActivator.h"
-#include "cppmicroservices/BundleContext.h"
-#include "cppmicroservices/ServiceProperties.h"
+using namespace xacc::quantum;
 
-#include <memory>
-#include <set>
+TEST(U3Tester, checkCreation) {
+    U3 u3(0, 0, 0, 3.14);
+    EXPECT_TRUE(boost::get<double>(u3.getParameter(0)) == 0);
+    EXPECT_TRUE(boost::get<double>(u3.getParameter(1)) == 0);
+    EXPECT_TRUE(boost::get<double>(u3.getParameter(2)) == 3.14);
+    EXPECT_TRUE(u3.toString("qreg") == "U3(0,0,3.14) qreg0");
+    EXPECT_TRUE(u3.bits().size() == 1);
+    EXPECT_TRUE(u3.bits()[0] == 0);
+    EXPECT_TRUE(u3.name() == "U3");
 
-using namespace cppmicroservices;
-
-namespace {
-
-/**
- */
-    class US_ABI_LOCAL OQASMCompilerActivator: public BundleActivator {
-
-    public:
-
-    OQASMCompilerActivator() {
-    }
-
-    /**
-     */
-    void Start(BundleContext context) {
-        auto c = std::make_shared<xacc::quantum::OQASMCompiler>();
-        context.RegisterService<xacc::Compiler>(c);
-        context.RegisterService<xacc::OptionsProvider>(c);
-
-        auto u3 = std::make_shared<xacc::quantum::U3>();
-        context.RegisterService<xacc::quantum::GateInstruction>(u3);
-    }
-
-    /**
-     */
-    void Stop(BundleContext /*context*/) {
-    }
-
-};
-
+    U3 u3_2(44, 3.14, 1.71234, 3.14);
+    EXPECT_TRUE(boost::get<double>(u3_2.getParameter(0)) == 3.14);
+    EXPECT_TRUE(boost::get<double>(u3_2.getParameter(1)) == 1.71234);
+    EXPECT_TRUE(boost::get<double>(u3_2.getParameter(2)) == 3.14);
+    EXPECT_TRUE(u3_2.toString("qreg") == "U3(3.14,1.71234,3.14) qreg44");
+    EXPECT_TRUE(u3_2.bits().size() == 1);
+    EXPECT_TRUE(u3_2.bits()[0] == 44);
+    EXPECT_TRUE(u3_2.name() == "U3");
 }
 
-CPPMICROSERVICES_EXPORT_BUNDLE_ACTIVATOR(OQASMCompilerActivator)
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}

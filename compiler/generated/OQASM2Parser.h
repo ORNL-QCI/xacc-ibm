@@ -606,7 +606,7 @@ public:
 
   class  MeasureContext : public antlr4::ParserRuleContext {
   public:
-    OQASM2Parser::GateargContext *qubit = nullptr;;
+    OQASM2Parser::GateargContext *qbit = nullptr;;
     OQASM2Parser::GateargContext *cbit = nullptr;;
     MeasureContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;

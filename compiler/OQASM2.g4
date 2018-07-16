@@ -243,7 +243,7 @@ gate
 
 /* A measure declaration */
 measure
-   : MEASURE (qubit = gatearg | qregister) '->' (cbit = gatearg | cregister)
+   : MEASURE (qbit = gatearg | qregister) '->' (cbit = gatearg | cregister)
    ;
 
 /* A reset declaration */
