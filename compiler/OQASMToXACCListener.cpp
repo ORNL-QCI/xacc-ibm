@@ -65,34 +65,16 @@ namespace xacc {
             return expr.value();
         }
 
-        double approxEquals(double a, double b, double tolerance=0.0001) {
-            return round(a / tolerance) == round(b / tolerance);
-        }
-
         void OQASMToXACCListener::exitU(oqasm::OQASM2Parser::UContext *ctx) {
             std::vector<int> qubits;
             std::vector<InstructionParameter> params;
-            std::string gateName;
 
             qubits.push_back(std::stoi(ctx->gatearg()->INT()->getText()));
-            auto theta = evalMathExpression(ctx->explist()->exp()->getText());
-            auto phi = evalMathExpression(ctx->explist()->explist()->exp()->getText());
-            auto lambda = evalMathExpression(ctx->explist()->explist()->explist()->exp()->getText());
+            params.push_back(evalMathExpression(ctx->explist()->exp()->getText()));  // theta
+            params.push_back(evalMathExpression(ctx->explist()->explist()->exp()->getText()));  // phi
+            params.push_back(evalMathExpression(ctx->explist()->explist()->explist()->exp()->getText()));  // lambda
 
-            if (approxEquals(phi, -pi / 2.0) && approxEquals(lambda, pi / 2.0)) {
-                gateName = "Rx";
-                params.push_back(theta);
-            } else if (phi == 0 && lambda == 0) {
-                gateName = "Ry";
-                params.push_back(theta);
-            } else if (theta == 0 && phi == 0) {
-                gateName = "Rz";
-                params.push_back(lambda);
-            } else {
-                xacc::error("General single qubit gate 'U' not yet supported.");
-            }
-
-            std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction(gateName, qubits);
+            std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction("U3", qubits);
             for (int i = 0; i < params.size(); i++) {
                 instruction->setParameter(i, params[i]);
             }
