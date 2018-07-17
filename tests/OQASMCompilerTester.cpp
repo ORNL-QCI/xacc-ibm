@@ -97,3 +97,8 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     EXPECT_TRUE(rxVisitor->countGates() == 1);
     EXPECT_TRUE(measureVisitor->countGates() == 3);
 }
+
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}

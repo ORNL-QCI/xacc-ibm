@@ -32,9 +32,6 @@
 #define IMPLS_IBM_OQASMCOMPILER_HPP
 
 #include "Compiler.hpp"
-#include "Utils.hpp"
-#include <boost/algorithm/string.hpp>
-
 
 namespace xacc {
 
@@ -42,7 +39,6 @@ namespace xacc {
 
         class OQASMCompiler : public xacc::Compiler {
         public:
-
             OQASMCompiler();
 
             /**

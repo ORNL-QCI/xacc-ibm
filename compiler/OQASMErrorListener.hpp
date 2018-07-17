@@ -28,59 +28,20 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include <iostream>
-#include <IRProvider.hpp>
-#include <OQASM2BaseListener.h>
-#include <OpenQasmVisitor.hpp>
+#ifndef XACC_IBM_OQASMERRORLISTENER_HPP
+#define XACC_IBM_OQASMERRORLISTENER_HPP
 
-#include "OQASM2Lexer.h"
-
-#include "OQASMCompiler.hpp"
-#include "OQASMToXACCListener.hpp"
-#include "OQASMErrorListener.hpp"
-
-using namespace oqasm;
 using namespace antlr4;
 
-namespace xacc {
-
-    namespace quantum {
-
-        OQASMCompiler::OQASMCompiler() = default;
-
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src, std::shared_ptr<Accelerator> acc) {
-            accelerator = acc;
-            return compile(src);
-        }
-
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src) {
-            ANTLRInputStream input(src);
-            OQASM2Lexer lexer(&input);
-            CommonTokenStream tokens(&lexer);
-            OQASM2Parser parser(&tokens);
-            parser.removeErrorListeners();
-            parser.addErrorListener(new OQASMErrorListener());
-
-            auto ir = xacc::getService<IRProvider>("gate")->createIR();
-
-            tree::ParseTree *tree = parser.xaccsrc();
-            OQASMToXACCListener listener(ir);
-            tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-
-            return ir;
-        }
-
-        const std::string OQASMCompiler::translate(const std::string &bufferVariable,
-                                                   std::shared_ptr<xacc::Function> function) {
-            auto visitor = std::make_shared<OpenQasmVisitor>();
-            InstructionIterator it(function);
-            while (it.hasNext()) {
-                auto nextInst = it.next();
-                if (nextInst->isEnabled()) {
-                    nextInst->accept(visitor);
-                }
-            }
-            return visitor->getOpenQasmString();
-        }
+class OQASMErrorListener : public BaseErrorListener {
+public:
+    void syntaxError(Recognizer *recognizer, Token *offendingSymbol, size_t line, size_t charPositionInLine,
+                     const std::__cxx11::string &msg, std::__exception_ptr::exception_ptr e) override {
+        std::ostringstream output;
+        output << "Invalid OpenQASM source: ";
+        output << "line " << line << ":" << charPositionInLine << " " << msg;
+        xacc::error(output.str());
     }
-}
+};
+
+#endif //XACC_IBM_OQASMERRORLISTENER_HPP
