@@ -82,6 +82,15 @@ namespace xacc {
             ir->addKernel(curFunc);
         }
 
+        void OQASMToXACCListener::exitKernelcall(oqasm::OQASM2Parser::KernelcallContext *ctx) {
+            std::string gateName = ctx->kernelname->getText();
+            if (functions.count(gateName)) {
+                curFunc->addInstruction(functions[gateName]);
+            } else {
+                xacc:error("Tried calling undefined kernel.");
+            }
+        }
+
         void OQASMToXACCListener::exitU(oqasm::OQASM2Parser::UContext *ctx) {
             std::vector<int> qubits;
             std::vector<InstructionParameter> params;
@@ -109,12 +118,6 @@ namespace xacc {
 
         void OQASMToXACCListener::exitUserDefGate(oqasm::OQASM2Parser::UserDefGateContext *ctx) {
             std::string gateName = ctx->gatename()->id()->getText();
-
-            // Check if calling a previous kernel
-            if (functions.count(gateName)) {
-                curFunc->addInstruction(functions[gateName]);
-                return;
-            }
 
             gateName[0] = static_cast<char>(toupper(gateName[0]));
             std::vector<int> qubits;

@@ -28,6 +28,9 @@ public:
   virtual void enterType(OQASM2Parser::TypeContext *ctx) = 0;
   virtual void exitType(OQASM2Parser::TypeContext *ctx) = 0;
 
+  virtual void enterKernelcall(OQASM2Parser::KernelcallContext *ctx) = 0;
+  virtual void exitKernelcall(OQASM2Parser::KernelcallContext *ctx) = 0;
+
   virtual void enterMainprog(OQASM2Parser::MainprogContext *ctx) = 0;
   virtual void exitMainprog(OQASM2Parser::MainprogContext *ctx) = 0;
 

@@ -25,16 +25,16 @@ public:
 
   enum {
     RuleXaccsrc = 0, RuleXacckernel = 1, RuleTypedparam = 2, RuleType = 3, 
-    RuleMainprog = 4, RuleProgram = 5, RuleLine = 6, RuleStatement = 7, 
-    RuleComment = 8, RuleInclude = 9, RuleFilename = 10, RuleRegdecl = 11, 
-    RuleQregister = 12, RuleCregister = 13, RuleRegistersize = 14, RuleGatedecl = 15, 
-    RuleGatename = 16, RuleGatearglist = 17, RuleGatearg = 18, RuleGatebody = 19, 
-    RuleGateprog = 20, RuleGateline = 21, RuleParamlist = 22, RuleParam = 23, 
-    RuleOpaque = 24, RuleOpaquename = 25, RuleOpaquearglist = 26, RuleOpaquearg = 27, 
-    RuleQop = 28, RuleUop = 29, RuleConditional = 30, RuleAction = 31, RuleExplist = 32, 
-    RuleExp = 33, RuleUnaryop = 34, RuleQreg = 35, RuleCreg = 36, RuleGate = 37, 
-    RuleMeasure = 38, RuleReeset = 39, RuleBarrier = 40, RuleId = 41, RuleReal = 42, 
-    RuleString = 43
+    RuleKernelcall = 4, RuleMainprog = 5, RuleProgram = 6, RuleLine = 7, 
+    RuleStatement = 8, RuleComment = 9, RuleInclude = 10, RuleFilename = 11, 
+    RuleRegdecl = 12, RuleQregister = 13, RuleCregister = 14, RuleRegistersize = 15, 
+    RuleGatedecl = 16, RuleGatename = 17, RuleGatearglist = 18, RuleGatearg = 19, 
+    RuleGatebody = 20, RuleGateprog = 21, RuleGateline = 22, RuleParamlist = 23, 
+    RuleParam = 24, RuleOpaque = 25, RuleOpaquename = 26, RuleOpaquearglist = 27, 
+    RuleOpaquearg = 28, RuleQop = 29, RuleUop = 30, RuleConditional = 31, 
+    RuleAction = 32, RuleExplist = 33, RuleExp = 34, RuleUnaryop = 35, RuleQreg = 36, 
+    RuleCreg = 37, RuleGate = 38, RuleMeasure = 39, RuleReeset = 40, RuleBarrier = 41, 
+    RuleId = 42, RuleReal = 43, RuleString = 44
   };
 
   OQASM2Parser(antlr4::TokenStream *input);
@@ -51,6 +51,7 @@ public:
   class XacckernelContext;
   class TypedparamContext;
   class TypeContext;
+  class KernelcallContext;
   class MainprogContext;
   class ProgramContext;
   class LineContext;
@@ -151,6 +152,22 @@ public:
 
   TypeContext* type();
 
+  class  KernelcallContext : public antlr4::ParserRuleContext {
+  public:
+    OQASM2Parser::IdContext *kernelname = nullptr;;
+    KernelcallContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdContext *id();
+    std::vector<ParamContext *> param();
+    ParamContext* param(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  KernelcallContext* kernelcall();
+
   class  MainprogContext : public antlr4::ParserRuleContext {
   public:
     MainprogContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -208,6 +225,7 @@ public:
     OpaqueContext *opaque();
     QopContext *qop();
     ConditionalContext *conditional();
+    KernelcallContext *kernelcall();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -548,8 +566,8 @@ public:
     UserDefGateContext(UopContext *ctx);
 
     GatenameContext *gatename();
-    ExplistContext *explist();
     GatearglistContext *gatearglist();
+    ExplistContext *explist();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };

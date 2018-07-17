@@ -30,6 +30,9 @@ public:
   virtual void enterType(OQASM2Parser::TypeContext * /*ctx*/) override { }
   virtual void exitType(OQASM2Parser::TypeContext * /*ctx*/) override { }
 
+  virtual void enterKernelcall(OQASM2Parser::KernelcallContext * /*ctx*/) override { }
+  virtual void exitKernelcall(OQASM2Parser::KernelcallContext * /*ctx*/) override { }
+
   virtual void enterMainprog(OQASM2Parser::MainprogContext * /*ctx*/) override { }
   virtual void exitMainprog(OQASM2Parser::MainprogContext * /*ctx*/) override { }
 

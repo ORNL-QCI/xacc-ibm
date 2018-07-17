@@ -46,6 +46,17 @@ namespace xacc {
 
     namespace quantum {
 
+        class OQASMErrorListener : public BaseErrorListener {
+        public:
+            void syntaxError(Recognizer *recognizer, Token * offendingSymbol, size_t line, size_t charPositionInLine,
+                                     const std::string &msg, std::exception_ptr e) {
+                std::ostringstream output;
+                output << "Invalid OpenQASM source: ";
+                output << "line " << line << ":" << charPositionInLine << " " << msg;
+                xacc::error(output.str());
+            }
+        };
+
         OQASMCompiler::OQASMCompiler() = default;
 
         std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src, std::shared_ptr<Accelerator> acc) {
@@ -58,6 +69,8 @@ namespace xacc {
             OQASM2Lexer lexer(&input);
             CommonTokenStream tokens(&lexer);
             OQASM2Parser parser(&tokens);
+            parser.removeErrorListeners();
+            parser.addErrorListener(new OQASMErrorListener());
 
             auto ir = xacc::getService<IRProvider>("gate")->createIR();
 

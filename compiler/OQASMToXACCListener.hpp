@@ -59,6 +59,8 @@ namespace xacc {
             void exitUserDefGate(OQASM2Parser::UserDefGateContext *ctx) override;
 
             void exitMeasure(OQASM2Parser::MeasureContext *ctx) override;
+
+            void exitKernelcall(OQASM2Parser::KernelcallContext *ctx);
         };
 
     }

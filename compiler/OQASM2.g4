@@ -56,6 +56,10 @@ type
    | 'double'
    | 'float'
    ;
+
+kernelcall
+   : kernelname=id '(' param? ( ',' param )* ')'
+   ;
 /***********************************************************************/
 
 
@@ -82,6 +86,7 @@ statement
    | opaque ';'
    | qop ';'
    | conditional ';'
+   | kernelcall ';'
    ;
 
 /* A program comment */
@@ -203,8 +208,7 @@ qop
 uop
    : 'U' '(' explist? ')' gatearg                   # U
    | 'CX' gatearg ',' gatearg                       # CX
-   /* gatearglist shouldn't be optional, only for XACC */
-   | gatename ( '(' explist ')' )? gatearglist?     # UserDefGate
+   | gatename ( '(' explist ')' )? gatearglist      # UserDefGate
    ;
 
 /* A classical conditional expression */
