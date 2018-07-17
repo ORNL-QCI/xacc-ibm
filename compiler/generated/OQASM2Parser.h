@@ -364,8 +364,8 @@ public:
   public:
     GatearglistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    GateargContext *gatearg();
-    GatearglistContext *gatearglist();
+    std::vector<GateargContext *> gatearg();
+    GateargContext* gatearg(size_t i);
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

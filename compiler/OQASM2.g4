@@ -137,7 +137,7 @@ gatename
 
 /* A coma-separated list of gate arguments */
 gatearglist
-   : gatearg (',' gatearglist)?
+   : gatearg (',' gatearg)*
    ;
 
 /* A gate argument */

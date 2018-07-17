@@ -123,7 +123,9 @@ namespace xacc {
             std::vector<int> qubits;
             std::vector<InstructionParameter> params;
 
-            qubits.push_back(std::stoi(ctx->gatearglist()->gatearg()->INT()->getText()));
+            for (int i = 0; i < ctx->gatearglist()->gatearg().size(); i++) {
+                qubits.push_back(std::stoi(ctx->gatearglist()->gatearg(static_cast<size_t>(i))->INT()->getText()));
+            }
 
             std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction(gateName, qubits);
             if (ctx->explist() != nullptr) {
