@@ -60,7 +60,7 @@ namespace xacc {
 
             void exitMeasure(OQASM2Parser::MeasureContext *ctx) override;
 
-            void exitKernelcall(OQASM2Parser::KernelcallContext *ctx);
+            void exitKernelcall(OQASM2Parser::KernelcallContext *ctx) override;
         };
 
     }

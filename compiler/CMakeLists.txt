@@ -92,7 +92,7 @@ add_custom_command(OUTPUT ${xacc_ibm_oqasmcompiler-GENERATED_SRC}
     COMMAND
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/generated/
     COMMAND
-    "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -listener -visitor -o ${CMAKE_CURRENT_SOURCE_DIR}/generated/ -package xacc_ibm_oqasmcompiler ${CMAKE_CURRENT_SOURCE_DIR}/OQASM2.g4
+    "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -listener -o ${CMAKE_CURRENT_SOURCE_DIR}/generated/ -package oqasm ${CMAKE_CURRENT_SOURCE_DIR}/OQASM2.g4
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/OQASM2.g4
     )
