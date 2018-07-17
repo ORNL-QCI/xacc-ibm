@@ -51,7 +51,9 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
             //"gate post q { }\n"
             "U(0.3,0.2,0.1) q[0];\n"
             "u3(3.14,0.2,0) q[1];\n"
-            "u3(pi,n,0) q[1];\n"
+            "u3(pi/2,n,n/2.3) q[1];\n"
+            "u3(pi/2,n,.1/3) q[2];\n"
+            "u3(2*pi/3,n,0/2) q[1];\n"
             "h q[1];\n"
             "x q[0];\n"
             "y q[2];\n"
@@ -85,7 +87,7 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     EXPECT_TRUE(cnotVisitor->countGates() == 2);
     EXPECT_TRUE(xVisitor->countGates() == 1);
     EXPECT_TRUE(yVisitor->countGates() == 1);
-    EXPECT_TRUE(uVisitor->countGates() == 3);
+    EXPECT_TRUE(uVisitor->countGates() == 5);
     EXPECT_TRUE(rxVisitor->countGates() == 1);
     EXPECT_TRUE(measureVisitor->countGates() == 3);
 }
