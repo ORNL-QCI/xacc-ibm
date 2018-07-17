@@ -59,12 +59,12 @@ namespace xacc {
             CommonTokenStream tokens(&lexer);
             OQASM2Parser parser(&tokens);
 
-            tree::ParseTree *tree = parser.mainprog();
-            OQASMToXACCListener listener;
+            auto ir = xacc::getService<IRProvider>("gate")->createIR();
+
+            tree::ParseTree *tree = parser.xaccsrc();
+            OQASMToXACCListener listener(ir);
             tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
 
-            auto ir = xacc::getService<IRProvider>("gate")->createIR();
-            ir->addKernel(listener.getKernel());
             return ir;
         }
 

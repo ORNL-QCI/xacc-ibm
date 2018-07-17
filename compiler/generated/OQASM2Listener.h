@@ -16,6 +16,18 @@ namespace oqasm {
 class  OQASM2Listener : public antlr4::tree::ParseTreeListener {
 public:
 
+  virtual void enterXaccsrc(OQASM2Parser::XaccsrcContext *ctx) = 0;
+  virtual void exitXaccsrc(OQASM2Parser::XaccsrcContext *ctx) = 0;
+
+  virtual void enterXacckernel(OQASM2Parser::XacckernelContext *ctx) = 0;
+  virtual void exitXacckernel(OQASM2Parser::XacckernelContext *ctx) = 0;
+
+  virtual void enterTypedparam(OQASM2Parser::TypedparamContext *ctx) = 0;
+  virtual void exitTypedparam(OQASM2Parser::TypedparamContext *ctx) = 0;
+
+  virtual void enterType(OQASM2Parser::TypeContext *ctx) = 0;
+  virtual void exitType(OQASM2Parser::TypeContext *ctx) = 0;
+
   virtual void enterMainprog(OQASM2Parser::MainprogContext *ctx) = 0;
   virtual void exitMainprog(OQASM2Parser::MainprogContext *ctx) = 0;
 

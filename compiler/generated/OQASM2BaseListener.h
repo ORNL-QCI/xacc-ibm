@@ -18,6 +18,18 @@ namespace oqasm {
 class  OQASM2BaseListener : public OQASM2Listener {
 public:
 
+  virtual void enterXaccsrc(OQASM2Parser::XaccsrcContext * /*ctx*/) override { }
+  virtual void exitXaccsrc(OQASM2Parser::XaccsrcContext * /*ctx*/) override { }
+
+  virtual void enterXacckernel(OQASM2Parser::XacckernelContext * /*ctx*/) override { }
+  virtual void exitXacckernel(OQASM2Parser::XacckernelContext * /*ctx*/) override { }
+
+  virtual void enterTypedparam(OQASM2Parser::TypedparamContext * /*ctx*/) override { }
+  virtual void exitTypedparam(OQASM2Parser::TypedparamContext * /*ctx*/) override { }
+
+  virtual void enterType(OQASM2Parser::TypeContext * /*ctx*/) override { }
+  virtual void exitType(OQASM2Parser::TypeContext * /*ctx*/) override { }
+
   virtual void enterMainprog(OQASM2Parser::MainprogContext * /*ctx*/) override { }
   virtual void exitMainprog(OQASM2Parser::MainprogContext * /*ctx*/) override { }
 

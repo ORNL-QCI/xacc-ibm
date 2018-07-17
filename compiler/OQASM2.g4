@@ -37,9 +37,31 @@
 
 grammar OQASM2;
 
+/* This part of the grammar is particular to XACC */
+/**********************************************************************/
+xaccsrc
+   : xacckernel*
+   ;
+
+xacckernel
+   : '__qpu__' kernelname=id '(' 'AcceleratorBuffer' acceleratorbuffer=id ( ',' typedparam )* ')' '{' mainprog '}'
+   ;
+
+typedparam
+   : type param
+   ;
+
+type
+   : 'int'
+   | 'double'
+   | 'float'
+   ;
+/***********************************************************************/
+
+
 /* The main program */
 mainprog
-   : comment* OPENQASM real ';' EOL program?
+   : comment* OPENQASM real ';' program?
    ;
 
 /* The actual program statements */
@@ -48,9 +70,9 @@ program
    ;
 
 line
-   : statement+ EOL
+   : statement+
    | comment
-   | include+ EOL
+   | include+
    ;
 
 /* A program statement */
@@ -181,7 +203,8 @@ qop
 uop
    : 'U' '(' explist? ')' gatearg                   # U
    | 'CX' gatearg ',' gatearg                       # CX
-   | gatename ( '(' explist ')' )? gatearglist      # UserDefGate
+   /* gatearglist shouldn't be optional, only for XACC */
+   | gatename ( '(' explist ')' )? gatearglist?     # UserDefGate
    ;
 
 /* A classical conditional expression */
@@ -338,12 +361,12 @@ STRING
    : '"' ~ ["]* '"'
    ;
 
-/* This is the end of the line, boys */
-EOL
-: '\r'? '\n'
-;
-
 /* Whitespaces, we skip'em */
 WS
    : [ \t\r\n] -> skip
    ;
+
+/* This is the end of the line, boys */
+EOL
+: '\r'? '\n'
+;

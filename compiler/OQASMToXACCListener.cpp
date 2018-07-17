@@ -46,13 +46,8 @@ namespace xacc {
 
         constexpr static double pi = boost::math::constants::pi<double>();
 
-        OQASMToXACCListener::OQASMToXACCListener() {
+        OQASMToXACCListener::OQASMToXACCListener(std::shared_ptr<xacc::IR> ir) : ir(ir) {
             gateRegistry = xacc::getService<IRProvider>("gate");
-            f = gateRegistry->createFunction("main", {}, {});
-        }
-
-        std::shared_ptr<Function> OQASMToXACCListener::getKernel() {
-            return f;
         }
 
         double evalMathExpression(const std::string &expression) {
@@ -74,6 +69,19 @@ namespace xacc {
             }
         }
 
+        void OQASMToXACCListener::enterXacckernel(oqasm::OQASM2Parser::XacckernelContext *ctx) {
+            std::vector<InstructionParameter> params;
+            for (int i = 0; i < ctx->typedparam().size(); i++) {
+                params.push_back(InstructionParameter(ctx->typedparam(static_cast<size_t>(i))->param()->getText()));
+            }
+            curFunc = gateRegistry->createFunction(ctx->kernelname->getText(), {}, params);
+            functions.insert({curFunc->name(), curFunc});
+        }
+
+        void OQASMToXACCListener::exitXacckernel(oqasm::OQASM2Parser::XacckernelContext *ctx) {
+            ir->addKernel(curFunc);
+        }
+
         void OQASMToXACCListener::exitU(oqasm::OQASM2Parser::UContext *ctx) {
             std::vector<int> qubits;
             std::vector<InstructionParameter> params;
@@ -87,7 +95,7 @@ namespace xacc {
             for (int i = 0; i < params.size(); i++) {
                 instruction->setParameter(i, params[i]);
             }
-            f->addInstruction(instruction);
+            curFunc->addInstruction(instruction);
         }
 
         void OQASMToXACCListener::exitCX(oqasm::OQASM2Parser::CXContext *ctx) {
@@ -96,11 +104,18 @@ namespace xacc {
             qubits.push_back(std::stoi(ctx->gatearg(1)->INT()->getText()));
 
             std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction("CNOT", qubits);
-            f->addInstruction(instruction);
+            curFunc->addInstruction(instruction);
         }
 
         void OQASMToXACCListener::exitUserDefGate(oqasm::OQASM2Parser::UserDefGateContext *ctx) {
             std::string gateName = ctx->gatename()->id()->getText();
+
+            // Check if calling a previous kernel
+            if (functions.count(gateName)) {
+                curFunc->addInstruction(functions[gateName]);
+                return;
+            }
+
             gateName[0] = static_cast<char>(toupper(gateName[0]));
             std::vector<int> qubits;
             std::vector<InstructionParameter> params;
@@ -115,7 +130,7 @@ namespace xacc {
                 }
             }
 
-            f->addInstruction(instruction);
+            curFunc->addInstruction(instruction);
         }
 
         void OQASMToXACCListener::exitMeasure(oqasm::OQASM2Parser::MeasureContext *ctx) {
@@ -124,7 +139,7 @@ namespace xacc {
             int classicalBit = std::stoi(ctx->cbit->INT()->getText());
 
             std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction("Measure", qubits, {InstructionParameter(classicalBit)});
-            f->addInstruction(instruction);
+            curFunc->addInstruction(instruction);
         }
     }
 }

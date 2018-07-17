@@ -17,22 +17,24 @@ public:
     T__7 = 8, T__8 = 9, T__9 = 10, T__10 = 11, T__11 = 12, T__12 = 13, T__13 = 14, 
     T__14 = 15, T__15 = 16, T__16 = 17, T__17 = 18, T__18 = 19, T__19 = 20, 
     T__20 = 21, T__21 = 22, T__22 = 23, T__23 = 24, T__24 = 25, T__25 = 26, 
-    COMMENT = 27, QREG = 28, CREG = 29, GATE = 30, MEASURE = 31, RESET = 32, 
-    BARRIER = 33, OPENQASM = 34, OPAQUE = 35, ID = 36, REAL = 37, INT = 38, 
-    STRING = 39, EOL = 40, WS = 41
+    T__26 = 27, T__27 = 28, T__28 = 29, T__29 = 30, T__30 = 31, COMMENT = 32, 
+    QREG = 33, CREG = 34, GATE = 35, MEASURE = 36, RESET = 37, BARRIER = 38, 
+    OPENQASM = 39, OPAQUE = 40, ID = 41, REAL = 42, INT = 43, STRING = 44, 
+    WS = 45, EOL = 46
   };
 
   enum {
-    RuleMainprog = 0, RuleProgram = 1, RuleLine = 2, RuleStatement = 3, 
-    RuleComment = 4, RuleInclude = 5, RuleFilename = 6, RuleRegdecl = 7, 
-    RuleQregister = 8, RuleCregister = 9, RuleRegistersize = 10, RuleGatedecl = 11, 
-    RuleGatename = 12, RuleGatearglist = 13, RuleGatearg = 14, RuleGatebody = 15, 
-    RuleGateprog = 16, RuleGateline = 17, RuleParamlist = 18, RuleParam = 19, 
-    RuleOpaque = 20, RuleOpaquename = 21, RuleOpaquearglist = 22, RuleOpaquearg = 23, 
-    RuleQop = 24, RuleUop = 25, RuleConditional = 26, RuleAction = 27, RuleExplist = 28, 
-    RuleExp = 29, RuleUnaryop = 30, RuleQreg = 31, RuleCreg = 32, RuleGate = 33, 
-    RuleMeasure = 34, RuleReeset = 35, RuleBarrier = 36, RuleId = 37, RuleReal = 38, 
-    RuleString = 39
+    RuleXaccsrc = 0, RuleXacckernel = 1, RuleTypedparam = 2, RuleType = 3, 
+    RuleMainprog = 4, RuleProgram = 5, RuleLine = 6, RuleStatement = 7, 
+    RuleComment = 8, RuleInclude = 9, RuleFilename = 10, RuleRegdecl = 11, 
+    RuleQregister = 12, RuleCregister = 13, RuleRegistersize = 14, RuleGatedecl = 15, 
+    RuleGatename = 16, RuleGatearglist = 17, RuleGatearg = 18, RuleGatebody = 19, 
+    RuleGateprog = 20, RuleGateline = 21, RuleParamlist = 22, RuleParam = 23, 
+    RuleOpaque = 24, RuleOpaquename = 25, RuleOpaquearglist = 26, RuleOpaquearg = 27, 
+    RuleQop = 28, RuleUop = 29, RuleConditional = 30, RuleAction = 31, RuleExplist = 32, 
+    RuleExp = 33, RuleUnaryop = 34, RuleQreg = 35, RuleCreg = 36, RuleGate = 37, 
+    RuleMeasure = 38, RuleReeset = 39, RuleBarrier = 40, RuleId = 41, RuleReal = 42, 
+    RuleString = 43
   };
 
   OQASM2Parser(antlr4::TokenStream *input);
@@ -45,6 +47,10 @@ public:
   virtual antlr4::dfa::Vocabulary& getVocabulary() const override;
 
 
+  class XaccsrcContext;
+  class XacckernelContext;
+  class TypedparamContext;
+  class TypeContext;
   class MainprogContext;
   class ProgramContext;
   class LineContext;
@@ -86,13 +92,71 @@ public:
   class RealContext;
   class StringContext; 
 
+  class  XaccsrcContext : public antlr4::ParserRuleContext {
+  public:
+    XaccsrcContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<XacckernelContext *> xacckernel();
+    XacckernelContext* xacckernel(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  XaccsrcContext* xaccsrc();
+
+  class  XacckernelContext : public antlr4::ParserRuleContext {
+  public:
+    OQASM2Parser::IdContext *kernelname = nullptr;;
+    OQASM2Parser::IdContext *acceleratorbuffer = nullptr;;
+    XacckernelContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    MainprogContext *mainprog();
+    std::vector<IdContext *> id();
+    IdContext* id(size_t i);
+    std::vector<TypedparamContext *> typedparam();
+    TypedparamContext* typedparam(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  XacckernelContext* xacckernel();
+
+  class  TypedparamContext : public antlr4::ParserRuleContext {
+  public:
+    TypedparamContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    TypeContext *type();
+    ParamContext *param();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  TypedparamContext* typedparam();
+
+  class  TypeContext : public antlr4::ParserRuleContext {
+  public:
+    TypeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  TypeContext* type();
+
   class  MainprogContext : public antlr4::ParserRuleContext {
   public:
     MainprogContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *OPENQASM();
     RealContext *real();
-    antlr4::tree::TerminalNode *EOL();
     std::vector<CommentContext *> comment();
     CommentContext* comment(size_t i);
     ProgramContext *program();
@@ -122,7 +186,6 @@ public:
   public:
     LineContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *EOL();
     std::vector<StatementContext *> statement();
     StatementContext* statement(size_t i);
     CommentContext *comment();
@@ -485,8 +548,8 @@ public:
     UserDefGateContext(UopContext *ctx);
 
     GatenameContext *gatename();
-    GatearglistContext *gatearglist();
     ExplistContext *explist();
+    GatearglistContext *gatearglist();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };

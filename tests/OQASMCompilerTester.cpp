@@ -41,39 +41,45 @@ using namespace xacc::quantum;
 TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     xacc::Initialize();
 
-    const std::string src(
-            "// nonsense\n"
-            "OPENQASM 2.0;\n"
-            "include \"qelib1.inc\";\n"
-            "qreg q[3];\n"
-            "creg c[3];\n"
-            "// optional post-rotation for state tomography\n"
-            //"gate post q { }\n"
-            "U(0.3,0.2,0.1) q[0];\n"
-            "u3(3.14,0.2,0) q[1];\n"
-            "u3(pi/2,n,n/2.3) q[1];\n"
-            "u3(pi/2,n,.1/3) q[2];\n"
-            "u3(2*pi/3,n,0/2) q[1];\n"
-            "h q[1];\n"
-            "x q[0];\n"
-            "y q[2];\n"
-            "rx(3.14) q[1];\n"
-            "CX q[1],q[2];\n"
-            "barrier q;\n"
-            "CX q[0],q[1];\n"
-            "h q[0];\n"
-            "measure q[0] -> c[0];\n"
-            "measure q[1] -> c[1];\n"
-            //"post q[2];\n"
-            "measure q[2] -> c[2];\n");
+    const std::string src("__qpu__ nonsense(AcceleratorBuffer ab, double n) {\n"
+        "   // nonsense\n"
+        "   OPENQASM 2.0;\n"
+        "   qreg q[3];\n"
+        "   creg c[3];\n"
+        "   // optional post-rotation for state tomography\n"
+        //"gate post q { }\n"
+        "   U(0.3,0.2,0.1) q[0];\n"
+        "   u3(3.14,0.2,0) q[1];\n"
+        "   u3(pi/2,n,n/2.3) q[1];\n"
+        "   u3(pi/2,n,0.1/3) q[2];\n"
+        "   u3(2*pi/3,n,0/2) q[1];\n"
+        "   h q[1];\n"
+        "   x q[0];\n"
+        "   y q[2];\n"
+        "   rx(3.14) q[1];\n"
+        "   CX q[1],q[2];\n"
+        "   barrier q;\n"
+        "   CX q[0],q[1];\n"
+        "   h q[0];\n"
+        "   measure q[0] -> c[0];\n"
+        "   measure q[1] -> c[1];\n"
+        //"post q[2];\n"
+        "   measure q[2] -> c[2];\n"
+        "}\n"
+        "__qpu__ morenonsense(AcceleratorBuffer ab, double n) {\n"
+        "   // nonsense 2\n"
+        "   OPENQASM 2.0;\n"
+        "   nonsense(ab, n);\n"
+        "   }\n"
+        );
 
     auto compiler = std::make_shared<OQASMCompiler>();
     auto ir = compiler->compile(src);
 
-    auto function = ir->getKernel("main");
+    auto function = ir->getKernel("nonsense");
     std::cout << "N: " << function->nInstructions() << std::endl;
 
-    EXPECT_TRUE(ir->getKernels().size() == 1);
+    EXPECT_TRUE(ir->getKernels().size() == 2);
 
     auto hadamardVisitor = std::make_shared<CountGatesOfTypeVisitor<Hadamard>>(function);
     auto cnotVisitor = std::make_shared<CountGatesOfTypeVisitor<CNOT>>(function);

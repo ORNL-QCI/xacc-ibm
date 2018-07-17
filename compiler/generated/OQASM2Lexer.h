@@ -17,9 +17,10 @@ public:
     T__7 = 8, T__8 = 9, T__9 = 10, T__10 = 11, T__11 = 12, T__12 = 13, T__13 = 14, 
     T__14 = 15, T__15 = 16, T__16 = 17, T__17 = 18, T__18 = 19, T__19 = 20, 
     T__20 = 21, T__21 = 22, T__22 = 23, T__23 = 24, T__24 = 25, T__25 = 26, 
-    COMMENT = 27, QREG = 28, CREG = 29, GATE = 30, MEASURE = 31, RESET = 32, 
-    BARRIER = 33, OPENQASM = 34, OPAQUE = 35, ID = 36, REAL = 37, INT = 38, 
-    STRING = 39, EOL = 40, WS = 41
+    T__26 = 27, T__27 = 28, T__28 = 29, T__29 = 30, T__30 = 31, COMMENT = 32, 
+    QREG = 33, CREG = 34, GATE = 35, MEASURE = 36, RESET = 37, BARRIER = 38, 
+    OPENQASM = 39, OPAQUE = 40, ID = 41, REAL = 42, INT = 43, STRING = 44, 
+    WS = 45, EOL = 46
   };
 
   OQASM2Lexer(antlr4::CharStream *input);
