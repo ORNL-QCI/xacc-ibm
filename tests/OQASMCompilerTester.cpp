@@ -41,7 +41,7 @@ using namespace xacc::quantum;
 TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     xacc::Initialize();
 
-    const std::string src("__qpu__ nonsense(AcceleratorBuffer ab, double n) {\n"
+    const std::string src("__qpu__ nonsense(AcceleratorBuffer qregister, double n) {\n"
         "   // nonsense\n"
         "   OPENQASM 2.0;\n"
         "   qreg q[3];\n"
@@ -76,7 +76,10 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     auto compiler = std::make_shared<OQASMCompiler>();
     auto ir = compiler->compile(src);
 
+    EXPECT_TRUE(ir->getKernels().size() == 2);
+
     auto function = ir->getKernel("nonsense");
+    std::cout << "HELLO\n" << function->toString("qregister") << "\n";
     std::cout << "N: " << function->nInstructions() << std::endl;
 
     EXPECT_TRUE(ir->getKernels().size() == 2);

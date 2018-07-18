@@ -33,6 +33,7 @@
 
 #include <OQASM2BaseListener.h>
 #include <IR.hpp>
+#include <IRProvider.hpp>
 
 using namespace oqasm;
 

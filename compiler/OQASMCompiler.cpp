@@ -28,9 +28,7 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include <iostream>
 #include <IRProvider.hpp>
-#include <OQASM2BaseListener.h>
 #include <OpenQasmVisitor.hpp>
 
 #include "OQASM2Lexer.h"

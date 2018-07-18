@@ -87,7 +87,7 @@ namespace xacc {
             if (functions.count(gateName)) {
                 curFunc->addInstruction(functions[gateName]);
             } else {
-                xacc:error("Tried calling undefined kernel.");
+                xacc::error("Tried calling undefined kernel.");
             }
         }
 
@@ -121,17 +121,17 @@ namespace xacc {
 
             gateName[0] = static_cast<char>(toupper(gateName[0]));
             std::vector<int> qubits;
-            std::vector<InstructionParameter> params;
 
             for (int i = 0; i < ctx->gatearglist()->gatearg().size(); i++) {
                 qubits.push_back(std::stoi(ctx->gatearglist()->gatearg(static_cast<size_t>(i))->INT()->getText()));
             }
 
+            InstructionParameter param;
             std::shared_ptr<xacc::Instruction> instruction = gateRegistry->createInstruction(gateName, qubits);
             if (ctx->explist() != nullptr) {
                 for (int i = 0; i < ctx->explist()->exp().size(); i++) {
-                    params.push_back(strToParam(ctx->explist()->exp(static_cast<size_t>(i))->getText()));
-                    instruction->setParameter(i, params[i]);
+                    param = strToParam(ctx->explist()->exp(static_cast<size_t>(i))->getText());
+                    instruction->setParameter(i, param);
                 }
             }
 
