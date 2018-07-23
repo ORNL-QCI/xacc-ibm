@@ -31,9 +31,9 @@
 #ifndef XACC_IBM_OQASMTOXACCLISTENER_H
 #define XACC_IBM_OQASMTOXACCLISTENER_H
 
-#include <OQASM2BaseListener.h>
-#include <IR.hpp>
-#include <IRProvider.hpp>
+#include "OQASM2BaseListener.h"
+#include "IR.hpp"
+#include "IRProvider.hpp"
 
 using namespace oqasm;
 

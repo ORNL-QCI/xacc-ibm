@@ -28,12 +28,15 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include <iostream>
-#include <IRProvider.hpp>
 #include <boost/math/constants/constants.hpp>
 #include "exprtk.hpp"
-#include "OQASMToXACCListener.hpp"
+
 #include "XACC.hpp"
+#include "IR.hpp"
+#include "IRProvider.hpp"
+
+#include "OQASM2BaseListener.h"
+#include "OQASMToXACCListener.hpp"
 
 using namespace oqasm;
 using symbol_table_t = exprtk::symbol_table<double>;

@@ -28,12 +28,14 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include <IRProvider.hpp>
-#include <OpenQasmVisitor.hpp>
+#include "XACC.hpp"
+#include "IRProvider.hpp"
 
-#include "OQASM2Lexer.h"
+#include "OpenQasmVisitor.hpp"
 
 #include "OQASMCompiler.hpp"
+#include "OQASM2Parser.h"
+#include "OQASM2Lexer.h"
 #include "OQASMToXACCListener.hpp"
 #include "OQASMErrorListener.hpp"
 

@@ -56,15 +56,6 @@ namespace xacc {
             virtual std::shared_ptr<xacc::IR> compile(const std::string &src);
 
             /**
-             * Return the name of this Compiler.
-             *
-             * @return name Compiler name
-             */
-            virtual const std::string getName() {
-                return "oqasm";
-            }
-
-            /**
              * This produces an OpenQASM source code representation of the given IR Function.
              *
              * @param function The XACC IR Function to translate
@@ -73,7 +64,7 @@ namespace xacc {
             virtual const std::string translate(const std::string &bufferVariable, std::shared_ptr<Function> function);
 
             virtual const std::string name() const {
-                return "oqasm";
+                return "openqasm";
             }
 
             virtual const std::string description() const {
