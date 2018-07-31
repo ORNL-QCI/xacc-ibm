@@ -36,6 +36,8 @@ set (LIBRARY_NAME xacc-ibm-oqasmcompiler)
 file (GLOB_RECURSE HEADERS *.hpp)
 file (GLOB SRC *.cpp generated/*.cpp)
 
+include_directories(generated)
+
 # Set up dependencies to resources to track changes
 usFunctionGetResourceSource(TARGET ${LIBRARY_NAME} OUT SRC)
 # Generate bundle initialization code
@@ -66,77 +68,6 @@ usFunctionEmbedResources(TARGET ${LIBRARY_NAME}
     FILES
     manifest.json
     )
-
-
-# ANTLR setup
-
-add_subdirectory(runtime)
-
-set(xacc_ibm_oqasmcompiler-GENERATED_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/generated/OQASM2Lexer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/generated/OQASM2Parser.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/generated/OQASM2BaseListener.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/generated/OQASM2Listener.cpp
-    )
-
-foreach( src_file ${xacc_ibm_oqasmcompiler-GENERATED_SRC} )
-    set_source_files_properties(
-        ${src_file}
-        PROPERTIES
-        GENERATED TRUE
-        )
-endforeach( src_file ${xacc_ibm_oqasmcompiler-GENERATED_SRC} )
-
-add_custom_target(GenerateParser DEPENDS ${xacc_ibm_oqasmcompiler-GENERATED_SRC})
-add_custom_command(OUTPUT ${xacc_ibm_oqasmcompiler-GENERATED_SRC}
-    COMMAND
-    ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/generated/
-    COMMAND
-    "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -listener -o ${CMAKE_CURRENT_SOURCE_DIR}/generated/ -package oqasm ${CMAKE_CURRENT_SOURCE_DIR}/OQASM2.g4
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/OQASM2.g4
-    )
-
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/misc
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/atn
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/dfa
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/tree
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/support
-    ${CMAKE_CURRENT_SOURCE_DIR}/generated
-    )
-
-#file(GLOB xacc_ibm_oqasmcompiler_SRC "${CMAKE_CURRENT_SOURCE_DIR}/generated/*")
-set(xacc_ibm_oqasmcompiler_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/OQASMCompiler.cpp
-    ${xacc_ibm_oqasmcompiler-GENERATED_SRC}
-    )
-
-if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set (flags_1 "-Wno-overloaded-virtual")
-else()
-    set (flags_1 "-MP /wd4251")
-endif()
-
-foreach( src_file ${xacc_ibm_oqasmcompiler_SRC} )
-    set_source_files_properties(
-        ${src_file}
-        PROPERTIES
-        COMPILE_FLAGS "${COMPILE_FLAGS} ${flags_1}"
-        )
-endforeach( src_file ${xacc_ibm_oqasmcompiler_SRC} )
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(xacc_ibm_oqasmcompiler PRIVATE "/MT$<$<CONFIG:Debug>:d>")
-endif()
-
-#add_dependencies(${LIBRARY_NAME} GenerateParser)
-
-target_link_libraries(${LIBRARY_NAME} antlr4_static)
-
-
-# XACC setup
 
 target_link_libraries(${LIBRARY_NAME} ${XACC_LIBRARIES})
 if(APPLE)
