@@ -32,7 +32,9 @@ include_directories(${CMAKE_SOURCE_DIR}/utils)
 
 link_directories(${XACC_LIBRARY_DIR})
 
-add_subdirectory(compiler)
+if(${XACC_HAS_ANTLR})
+   add_subdirectory(compiler)
+endif()
 add_subdirectory(accelerator)
 if(PYTHON_INCLUDE_DIR)
    add_subdirectory(python)
@@ -40,7 +42,6 @@ endif()
 
 if(IBM_BUILD_TESTS)
    include_directories(${CMAKE_SOURCE_DIR}/accelerator)
-   include_directories(${CMAKE_SOURCE_DIR}/compiler)
    include_directories(${CMAKE_SOURCE_DIR}/utils)
    add_subdirectory(examples)
    add_subdirectory(tests)
