@@ -78,7 +78,7 @@ class CMakeBuild(build_ext):
 
 s = setup(
     name='xacc-ibm',
-    version='0.1.0',
+    version='0.1.1',
     author='Alex McCaskey',
     author_email='xacc-dev@eclipse.org',
     packages=find_packages('python'),
