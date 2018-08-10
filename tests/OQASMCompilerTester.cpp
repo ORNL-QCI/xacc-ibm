@@ -29,16 +29,16 @@
  *
  **********************************************************************************/
 #include <gtest/gtest.h>
-#include <U3.hpp>
-#include "OpenQasmVisitor.hpp"
-#include "OQASMCompiler.hpp"
+#include "XACC.hpp"
 #include "CountGatesOfTypeVisitor.hpp"
+#include "AllGateVisitor.hpp"
+#include "U3.hpp"
 
 using namespace xacc;
 
 using namespace xacc::quantum;
 
-TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
+TEST(OQasmCompilerTester, checkCompileOQASM) {
     xacc::Initialize();
 
     const std::string src("__qpu__ nonsense(AcceleratorBuffer qregister, double n) {\n"
@@ -73,7 +73,7 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
         "   }\n"
         );
 
-    auto compiler = std::make_shared<OQASMCompiler>();
+    auto compiler = xacc::getService<Compiler>("openqasm");
     auto ir = compiler->compile(src);
 
     EXPECT_TRUE(ir->getKernels().size() == 2);
@@ -99,6 +99,8 @@ TEST(OpenQasmCompilerTester, checkTeleportOQASM) {
     EXPECT_TRUE(uVisitor->countGates() == 5);
     EXPECT_TRUE(rxVisitor->countGates() == 1);
     EXPECT_TRUE(measureVisitor->countGates() == 3);
+
+    xacc::Finalize();
 }
 
 int main(int argc, char** argv) {
