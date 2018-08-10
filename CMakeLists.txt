@@ -32,6 +32,9 @@ include_directories(${CMAKE_SOURCE_DIR}/utils)
 
 link_directories(${XACC_LIBRARY_DIR})
 
+if(${XACC_HAS_ANTLR})
+   add_subdirectory(compiler)
+endif()
 add_subdirectory(accelerator)
 if(PYTHON_INCLUDE_DIR)
    add_subdirectory(python)
