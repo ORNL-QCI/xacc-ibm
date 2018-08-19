@@ -7,6 +7,11 @@ message(STATUS "C++ version ${CXX_STANDARD} configured.")
 
 option(IBM_BUILD_TESTS "Build test programs" OFF)
 
+if (FROM_SETUP_PY)
+   message(STATUS "Running build from setup.py, linking to static libstdc++")
+   set (CMAKE_SHARED_LINKER_FLAGS "-static-libstdc++" CACHE INTERNAL "" FORCE)
+endif()
+
 # Make sure all build libraries have reference to their dependents
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
