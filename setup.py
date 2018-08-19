@@ -55,9 +55,9 @@ class CMakeBuild(build_ext):
         print(dir(self))
         print(self.build_lib)
   
-        import pyxacc
+        import xacc
         cmake_args = ['-DPYTHON_INCLUDE_DIR=' + sysconfig.get_paths()['platinclude'], 
-                      '-DXACC_DIR='+os.path.dirname(os.path.realpath(pyxacc.__file__)),
+                      '-DXACC_DIR='+os.path.dirname(os.path.realpath(xacc.__file__)),
 		      '-DFROM_SETUP_PY=TRUE']
         if 'install' not in args:
            cmake_args.append('-DCMAKE_INSTALL_PREFIX='+install_prefix) #install_prefix = script_path + '/' + self.build_lib 
