@@ -103,7 +103,15 @@ std::vector<std::shared_ptr<IRTransformation>> IBMAccelerator::getIRTransformati
 void IBMAccelerator::initialize() {
 	std::string jsonStr = "", apiKey = "";
 	auto options = RuntimeOptions::instance();
-	searchAPIKey(apiKey, url);
+	searchAPIKey(apiKey, url, hub, group, project);
+
+    std::string getBackendPath = "/api/Backends?access_token=";
+    std::string postJobPath = "/api/Jobs?access_token=";
+    if (!hub.empty()) {
+        getBackendPath = "/api/Network/"+hub+"/Groups/"+group+"/Projects/"+project+"/devices?access_token=";
+        postJobPath = "/api/Network/"+hub+"/Groups/"+group+"/Projects/"+project+"/jobs?access_token=";
+    }
+
 	std::string tokenParam = "apiToken=" + apiKey;
 
 	std::map<std::string, std::string> headers { { "Content-Type",
@@ -121,8 +129,9 @@ void IBMAccelerator::initialize() {
 	d.Parse(response);
 	currentApiToken = d["id"].GetString();
 
-	response = handleExceptionRestClientGet(url, "/api/Backends?access_token="+currentApiToken);
+	response = handleExceptionRestClientGet(url, getBackendPath+currentApiToken);
 
+    // xacc::info("DEVICES: " + response);
 	d.Parse(response);
 
 	auto backendArray = d.GetArray();
@@ -149,7 +158,7 @@ void IBMAccelerator::initialize() {
 	}
 
 	// Set these for RemoteAccelerator.execute
-	postPath = "/api/Jobs?access_token="+currentApiToken;
+	postPath = postJobPath+currentApiToken;
 	remoteUrl = url;
 }
 
@@ -246,14 +255,18 @@ const std::string IBMAccelerator::processInput(
 
 	// Check that the qpu is online
 	if (backendName != "ibmq_qasm_simulator") {
-		std::string deviceResponse = handleExceptionRestClientGet(remoteUrl, "/api/Backends/"+backendName);
+        std::string checkBackend = "/api/Backends/"+backendName;
+        if (!hub.empty()) {
+            checkBackend = "/api/Network/ibm-q-ornl/devices/"+backendName+"?access_token="+this->currentApiToken;
+        }
+		std::string deviceResponse = handleExceptionRestClientGet(remoteUrl, checkBackend);
 		Document d;
 		d.Parse(deviceResponse);
 		std::string _status = d["status"].GetString();
 		while(_status != "on") {
 			xacc::info(backendName + " is offline. Please wait");
 			std::this_thread::sleep_for(std::chrono::milliseconds(400));
-			deviceResponse = handleExceptionRestClientGet(remoteUrl, "/api/Backends/"+backendName);
+			deviceResponse = handleExceptionRestClientGet(remoteUrl, checkBackend);
 			d.Parse(deviceResponse);
 			_status = d["status"].GetString();
 		}
@@ -270,6 +283,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 		std::shared_ptr<AcceleratorBuffer> buffer,
 		const std::string& response) {
 
+    // xacc::info("POST RESPONSE\n" + response);
 	if (boost::contains(response, "error")) {
 		xacc::error( response );
 	}
@@ -278,7 +292,9 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> IBMAccelerator::processResponse(
 	std::string jobId = std::string(d["id"].GetString());
 
 	std::string getPath = "/api/Jobs/"+jobId + "?access_token="+currentApiToken;
-
+    if (!hub.empty()) {
+        // getPath = 
+    }
 	std::string getResponse = handleExceptionRestClientGet(url, getPath);
 
 	// Loop until the job is complete,
@@ -447,32 +463,41 @@ std::shared_ptr<AcceleratorGraph> IBMAccelerator::getAcceleratorConnectivity() {
 	return graph;
 }
 
-void IBMAccelerator::searchAPIKey(std::string& key, std::string& url) {
+void IBMAccelerator::searchAPIKey(std::string& key, std::string& url, std::string& hub, std::string& group, std::string& project) {
 
-	// Search for the API Key in $HOME/.dwave_config,
-	// $DWAVE_CONFIG, or in the command line argument --dwave-api-key
-	auto options = RuntimeOptions::instance();
-	boost::filesystem::path dwaveConfig(
+	// Search for the API Key in $HOME/.ibm_config,
+	// $IBM_CONFIG, or in the command line argument --ibm-api-key
+	boost::filesystem::path ibmConfig(
 			std::string(getenv("HOME")) + "/.ibm_config");
 
-	if (boost::filesystem::exists(dwaveConfig)) {
-		findApiKeyInFile(key, url, dwaveConfig);
+	if (boost::filesystem::exists(ibmConfig)) {
+		findApiKeyInFile(key, url, hub, group, project, ibmConfig);
 	} else if (const char * nonStandardPath = getenv("IBM_CONFIG")) {
-		boost::filesystem::path nonStandardDwaveConfig(
+		boost::filesystem::path nonStandardIbmConfig(
 						nonStandardPath);
-		findApiKeyInFile(key, url, nonStandardDwaveConfig);
+		findApiKeyInFile(key, url, hub, group, project, nonStandardIbmConfig);
 	} else {
 
 		// Ensure that the user has provided an api-key
-		if (!options->exists("ibm-api-key")) {
+		if (!xacc::optionExists("ibm-api-key")) {
 			xacc::error("Cannot execute kernel on IBM chip without API Key.");
 		}
 
 		// Set the API Key
-		key = (*options)["ibm-api-key"];
+		key = xacc::getOption("ibm-api-key");
 
-		if (options->exists("ibm-api-url")) {
-			url = (*options)["ibm-api-url"];
+		if (xacc::optionExists("ibm-api-url")) {
+			url = xacc::getOption("ibm-api-url");
+		}
+
+        if (xacc::optionExists("ibm-api-hub")) {
+			hub = xacc::getOption("ibm-api-hub");
+		}
+        if (xacc::optionExists("ibm-api-group")) {
+			group = xacc::getOption("ibm-api-group");
+		}
+        if (xacc::optionExists("ibm-api-project")) {
+			project = xacc::getOption("ibm-api-project");
 		}
 	}
 
@@ -484,7 +509,7 @@ void IBMAccelerator::searchAPIKey(std::string& key, std::string& url) {
 	}
 }
 
-void IBMAccelerator::findApiKeyInFile(std::string& apiKey, std::string& url,
+void IBMAccelerator::findApiKeyInFile(std::string& apiKey, std::string& url, std::string& hub, std::string& group, std::string& project,
 		boost::filesystem::path &p) {
 	std::ifstream stream(p.string());
 	std::string contents(
@@ -506,6 +531,24 @@ void IBMAccelerator::findApiKeyInFile(std::string& apiKey, std::string& url,
 			auto key = split[1] + ":" + split[2];
 			boost::trim(key);
 			url = key;
+		} else if (boost::contains(l, "hub")) {
+			std::vector<std::string> split;
+			boost::split(split, l, boost::is_any_of(":"));
+			auto _hub = split[1];
+			boost::trim(_hub);
+			hub = _hub;
+		} else if (boost::contains(l, "group")) {
+			std::vector<std::string> split;
+			boost::split(split, l, boost::is_any_of(":"));
+			auto _group = split[1];
+			boost::trim(_group);
+			group = _group;
+		} else if (boost::contains(l, "project")) {
+			std::vector<std::string> split;
+			boost::split(split, l, boost::is_any_of(":"));
+			auto _project = split[1];
+			boost::trim(_project);
+			project = _project;
 		}
 	}
 }

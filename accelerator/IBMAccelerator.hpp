@@ -52,10 +52,9 @@ namespace xacc {
 namespace quantum {
 
 
-
 /**
  * Wrapper for information related to the remote
- * D-Wave solver.
+ * IBM Backend.
  */
 struct IBMBackend {
 	std::string name;
@@ -69,9 +68,8 @@ struct IBMBackend {
 /**
  * The IBMAccelerator is a QPUGate Accelerator that
  * provides an execute implementation that maps XACC IR
- * to an equivalent Quil string, and executes it on the
- * IBM superconducting quantum chip at api.IBM.com/qvm
- * through Fire's HTTP Client utilities.
+ * to an equivalent OpenQasm string, and executes it on the
+ * IBM QPU.
  *
  */
 class IBMAccelerator : public RemoteAccelerator {
@@ -241,13 +239,13 @@ private:
 	 * API key in $HOME/.ibm_config, $IBM_CONFIG,
 	 * or --ibm-api-key command line arg
 	 */
-	void searchAPIKey(std::string& key, std::string& url);
+	void searchAPIKey(std::string& key, std::string& url, std::string& hub, std::string& group, std::string& project);
 
 	/**
 	 * Private utility to search for key in the config
 	 * file.
 	 */
-	void findApiKeyInFile(std::string& key, std::string& url, boost::filesystem::path &p);
+	void findApiKeyInFile(std::string& key, std::string& url, std::string& hub, std::string& group, std::string& project, boost::filesystem::path &p);
 
 	/**
 	 * Reference to the temporary API Token for
@@ -260,6 +258,10 @@ private:
 	 */
 	std::string url;
 
+    std::string hub;
+    std::string group;
+    std::string project;
+    
 	/**
 	 * Mapping of available backend name to an actual
 	 * IBMBackend struct data structure.
