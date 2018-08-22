@@ -1,4 +1,4 @@
-[![Build Status](http://ci.eclipse.org/xacc/buildStatus/icon?job=xacc-ibm-ci)](http://ci.eclipse.org/xacc/job/xacc-ibm-ci/)
+[![Build Status](https://travis-ci.org/ORNL-QCI/xacc-ibm.svg?branch=master)](https://travis-ci.org/ORNL-QCI/xacc-ibm)
 
 # XACC Plugins for working with the IBM Quantum Experience
 This plugin for XACC provide an Accelerator implementation targeting the remote IBM Quantum Experience infrastructure.
