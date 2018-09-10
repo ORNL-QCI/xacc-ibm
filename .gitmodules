@@ -1,0 +1,3 @@
+[submodule "accelerator/qiskit-terra"]
+	path = accelerator/qiskit-terra
+	url = https://github.com/amccaskey/qiskit-terra

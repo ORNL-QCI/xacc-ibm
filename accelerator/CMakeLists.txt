@@ -10,6 +10,12 @@ usFunctionGetResourceSource(TARGET ${LIBRARY_NAME} OUT SRC)
 # Generate bundle initialization code
 usFunctionGenerateBundleInit(TARGET ${LIBRARY_NAME} OUT SRC)
 
+include_directories(qiskit-terra/src/qasm-simulator-cpp/src)
+include_directories(qiskit-terra/src/qasm-simulator-cpp/src/backends)
+include_directories(qiskit-terra/src/qasm-simulator-cpp/src/engines)
+include_directories(qiskit-terra/src/qasm-simulator-cpp/src/utilities)
+include_directories(qiskit-terra/src/qasm-simulator-cpp/src/third-party/headers)
+
 add_library(${LIBRARY_NAME} SHARED ${SRC})
 
 set(_bundle_name xacc_ibm_accelerator) 
