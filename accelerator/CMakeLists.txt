@@ -2,6 +2,9 @@ set (PACKAGE_NAME "IBM XACC Accelerator")
 set (PACKAGE_DESCIPTION "IBM XACC Accelerator Framework")
 set (LIBRARY_NAME xacc-ibm-accelerator)
 
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+
 file (GLOB_RECURSE HEADERS *.hpp)
 file (GLOB SRC *.cpp)
 
@@ -42,7 +45,7 @@ usFunctionEmbedResources(TARGET ${LIBRARY_NAME}
     manifest.json
   )
 
-target_link_libraries(${LIBRARY_NAME} ${XACC_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME} ${XACC_LIBRARIES} blas lapack)
 if(APPLE)
    set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
    set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")

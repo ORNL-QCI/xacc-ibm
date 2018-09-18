@@ -68,9 +68,8 @@ protected:
 
 	int _nQubits;
 
-
-    std::string operationsJsonStr = "[";
-        
+    json operations;
+    
 public:
 
 	virtual const std::string name() const {
@@ -99,19 +98,13 @@ public:
 	 * Visit hadamard gates
 	 */
 	void visit(Hadamard& h) {
-		std::stringstream ss, js;
+		std::stringstream ss;
 		ss << "u2(" << 0 << ", " << pi << ") q[" << h.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
-
-        js << "{\"name\":\"u2\",\"params\": [0.0," << pi << "],\"qubits\":[" << h.bits()[0]<<"]},";
-        operationsJsonStr += js.str();
 	}
 
 	void visit(Identity& i) {
-        std::stringstream js;
 		OpenQasmStr += "id q[" + std::to_string(i.bits()[0]) + "];\n";
-        js << "{\"name\":\"id\",\"params\": [],\"qubits\":[" << i.bits()[0]<<"]},";
-        operationsJsonStr += js.str();
 	}
 
 	void visit(CZ& cz) {
@@ -122,45 +115,35 @@ public:
 	 * Visit CNOT gates
 	 */
 	void visit(CNOT& cn) {
-		std::stringstream ss, js;
+		std::stringstream ss;
 		ss << "cx q[" << cn.bits()[0] << "], q[" << cn.bits()[1] << "];\n";
 		OpenQasmStr += ss.str();
-
-        js << "{\"name\":\"cx\",\"params\": [],\"qubits\":[" << cn.bits()[0]<< ", " << cn.bits()[1] << "]},";
-        operationsJsonStr += js.str();
 	}
-    
 	/**
 	 * Visit X gates
 	 */
 	void visit(X& x) {
-		std::stringstream ss, js;
+		std::stringstream ss;
 		ss << "u3(" << pi << ", " << 0 << ", " << pi << ") q[" << x.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
-        js << "{\"name\":\"u3\",\"params\": [" << pi << ", " << 0 << ", " << pi << "],\"qubits\":[" << x.bits()[0]<< "]},";
-        operationsJsonStr += js.str();
 	}
 
 	/**
 	 *
 	 */
 	void visit(Y& y) {
-		std::stringstream ss, js;
-		ss << "u3(" << pi << ", " << pi/2.0 << ", " << pi << ") q[" << y.bits()[0] << "];\n";
+		std::stringstream ss;
+		ss << "u3(" << pi << ", " << pi/2.0 << ", " << pi << ") q[" << x.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
-        js << "{\"name\":\"u3\",\"params\": [" << pi << ", " << pi/2.0 << ", " << pi << "],\"qubits\":[" << y.bits()[0]<< "]},";
-        operationsJsonStr += js.str();
 	}
 
 	/**
 	 * Visit Z gates
 	 */
 	void visit(Z& z) {
-		std::stringstream ss, js;
+		std::stringstream ss;
 		ss << "u1(" << pi << ") q[" << z.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
-        js << "{\"name\":\"u1\",\"params\": [" << pi << "],\"qubits\":[" << z.bits()[0]<< "]},";
-        operationsJsonStr += js.str();
 	}
 
 	int classicalBitCounter = 0;
@@ -168,13 +151,11 @@ public:
 	 * Visit Measurement gates
 	 */
 	void visit(Measure& m) {
-		std::stringstream ss, js;
+		std::stringstream ss;
 		ss << "creg c" << classicalBitCounter << "[1];\n";
 		ss << "measure q[" << m.bits()[0] << "] -> c" << classicalBitCounter << "[0];\n";
 		OpenQasmStr += ss.str();
 		qubitToClassicalBitIndex.insert(std::make_pair(m.bits()[0], classicalBitCounter));
-        js << "{\"clbits\":[" << classicalBitCounter << "],\"name\":\"measure\",\"qubits\":[" << m.bits()[0]<< "]},";
-        operationsJsonStr += js.str();
 		classicalBitCounter++;
 	}
 
@@ -200,40 +181,31 @@ public:
 	}
 
 	void visit(Rx& rx) {
-		std::stringstream ss, js;
+		std::stringstream ss;
 		auto angleStr = boost::lexical_cast<std::string>(rx.getParameter(0));
 		ss << "u3(" << angleStr << ", " << (-pi/2.0) << ", " << (pi/2.0) << ") q[" << rx.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
-        js << "{\"name\":\"u3\",\"params\": [" << angleStr << ", " << (-pi/2.0) << ", " << pi/2.0 << "],\"qubits\":[" << rx.bits()[0]<< "]},";
-        operationsJsonStr += js.str();
 	}
 
 	void visit(Ry& ry) {
-		std::stringstream ss, js;
+		std::stringstream ss;
 		auto angleStr = boost::lexical_cast<std::string>(ry.getParameter(0));
 		ss << "u3(" << angleStr << ", 0, 0) q[" << ry.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
-        js << "{\"name\":\"u3\",\"params\": [" << angleStr << ", " << 0 << ", " << 0 << "],\"qubits\":[" << ry.bits()[0]<< "]},";
-        operationsJsonStr += js.str();
 	}
 
 	void visit(Rz& rz) {
-		std::stringstream ss, js;
+		std::stringstream ss;
 		auto angleStr = boost::lexical_cast<std::string>(rz.getParameter(0));
 		ss << "u1(" << angleStr << ") q[" << rz.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
-        js << "{\"name\":\"u1\",\"params\": [" << angleStr << "],\"qubits\":[" << rz.bits()[0]<< "]},";
-        operationsJsonStr += js.str();
 	}
 
 	void visit(CPhase& cp) {
 	}
 
 	void visit(Swap& s) {
-        CNOT c1(s.bits()), c2(s.bits()[1],s.bits()[0]), c3(s.bits());
-        visit(c1);
-        visit(c2);
-        visit(c3);
+//		OpenQasmStr += "SWAP " + std::to_string(s.bits()[0]) + " " + std::to_string(s.bits()[1]) + "\n";
 	}
 
 	void visit(GateFunction& f) {
@@ -245,10 +217,6 @@ public:
 	std::string getOpenQasmString() {
 		return OpenQasmStr;
 	}
-
-    std::string getOperationsJsonString() {
-        return operationsJsonStr.substr(0,operationsJsonStr.length()-1)+"]";
-    }
 
 	/**
 	 * Return the classical measurement indices

@@ -66,6 +66,8 @@ public:
 		return AcceleratorType::qpu_gate;
 	}
 
+    void initialize() override {return;}
+    
     virtual void execute(std::shared_ptr<AcceleratorBuffer> buffer,
 			const std::shared_ptr<xacc::Function> kernel);
 

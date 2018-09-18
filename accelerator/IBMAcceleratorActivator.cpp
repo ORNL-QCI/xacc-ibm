@@ -35,6 +35,7 @@
 #include <memory>
 #include <set>
 #include "IBMAccelerator.hpp"
+#include "LocalIBMAccelerator.hpp"
 
 using namespace cppmicroservices;
 
@@ -54,8 +55,11 @@ public:
 	void Start(BundleContext context) {
 		auto acc = std::make_shared<xacc::quantum::IBMAccelerator>();
 		auto vis = std::make_shared<xacc::quantum::OpenQasmVisitor>();
+		auto acc2 = std::make_shared<xacc::quantum::LocalIBMAccelerator>();
 
 		context.RegisterService<xacc::Accelerator>(acc);
+		context.RegisterService<xacc::Accelerator>(acc2);
+
 		context.RegisterService<xacc::OptionsProvider>(acc);
 		context.RegisterService<xacc::BaseInstructionVisitor>(vis);
 	}
