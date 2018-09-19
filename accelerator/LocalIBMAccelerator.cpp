@@ -78,10 +78,12 @@ LocalIBMAccelerator::getIRTransformations() {
 void LocalIBMAccelerator::execute(
     std::shared_ptr<AcceleratorBuffer> buffer,
     const std::shared_ptr<xacc::Function> kernel) {
-      auto buffers = execute(buffer, std::vector<std::shared_ptr<xacc::Function>>{kernel});
-    for (auto &kv : buffers[0]->getMeasurementCounts()) {
-        for (int i = 0; i < kv.second; i++) buffer->appendMeasurement(kv.first);
-    }
+  auto buffers =
+      execute(buffer, std::vector<std::shared_ptr<xacc::Function>>{kernel});
+  for (auto &kv : buffers[0]->getMeasurementCounts()) {
+    for (int i = 0; i < kv.second; i++)
+      buffer->appendMeasurement(kv.first);
+  }
 }
 
 std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
@@ -122,8 +124,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
 
     json nq, nc;
     h["number_of_qubits"] = buffer->size();
-    h["number_of_clbits"] =
-        measurementSupports[kernelCounter].size(); // h["clbit_labels"].size();
+    h["number_of_clbits"] = measurementSupports[kernelCounter].size();
 
     circuit["compiled_circuit"]["header"] = h;
 
@@ -148,12 +149,24 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
   json config2;
   config2["backend"] = "qasm_simulator_cpp";
   config2["max_credits"] = 10;
-  config2["shots"] = 1024;
+  config2["shots"] = xacc::optionExists("ibm-shots")
+                         ? std::stoi(xacc::getOption("ibm-shots"))
+                         : 1024;
+
+  if (xacc::optionExists("local-ibm-m-error-probs")) {
+    auto probStr = xacc::getOption("local-ibm-m-error-probs");
+    std::vector<std::string> split;
+    boost::split(split, probStr, boost::is_any_of(","));
+    config2["noise_params"]["readout_error"] = {std::stod(split[0])};
+    for (int i = 1; i < split.size(); i++) {
+      config2["noise_params"]["readout_error"].push_back(std::stod(split[i]));
+    }
+  }
 
   j["config"] = config2;
   j["id"] = "fakeid";
 
-//   std::cout << "JSON:\n" << j.dump(4) << "\n";
+  //   std::cout << "JSON:\n" << j.dump(4) << "\n";
 
   std::string response = "";
   try {
@@ -162,7 +175,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
 
     // Execute
     response = sim.execute();
-    xacc::info("IBM Sim Output:\n"+response);
+    // xacc::info("IBM Sim Output:\n" + response);
   } catch (std::exception &e) {
     std::stringstream msg;
     msg << "Failed to execute qobj (" << e.what() << ")";

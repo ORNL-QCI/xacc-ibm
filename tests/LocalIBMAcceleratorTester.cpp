@@ -39,6 +39,7 @@ using namespace xacc::quantum;
 TEST(LocalIBMAcceleratorTester,checkSimple) {
     xacc::Initialize();
   
+    xacc::setOption("local-ibm-m-error-probs",".03,.08;.02,.07");
 
 	auto acc = xacc::getAccelerator("local-ibm");
 	acc->initialize();
@@ -62,6 +63,9 @@ TEST(LocalIBMAcceleratorTester,checkSimple) {
 
 	acc->execute(buffer, f);
 
+    for (auto& kv: buffer->getMeasurementCounts()) {
+        std::cout << kv.first << ":" << kv.second << "\n";
+    }
 	xacc::Finalize();
 }
 
