@@ -39,7 +39,7 @@ using namespace xacc::quantum;
 TEST(LocalIBMAcceleratorTester,checkSimple) {
     xacc::Initialize();
   
-    xacc::setOption("local-ibm-m-error-probs",".03,.08;.02,.07");
+    // xacc::setOption("local-ibm-m-error-probs",".03,.08;.02,.07");
 
 	auto acc = xacc::getAccelerator("local-ibm");
 	acc->initialize();

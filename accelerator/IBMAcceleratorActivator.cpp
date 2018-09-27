@@ -56,7 +56,7 @@ public:
 		auto acc = std::make_shared<xacc::quantum::IBMAccelerator>();
 		auto vis = std::make_shared<xacc::quantum::OpenQasmVisitor>();
 		auto acc2 = std::make_shared<xacc::quantum::LocalIBMAccelerator>();
-
+        
 		context.RegisterService<xacc::Accelerator>(acc);
 		context.RegisterService<xacc::Accelerator>(acc2);
 

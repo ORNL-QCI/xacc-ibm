@@ -39,9 +39,8 @@ using namespace xacc::quantum;
 TEST(IBMIRTransformationTester,checkCreation) {
 
 	std::vector<std::pair<int,int>> couplers {{0,1},{0,2},{1,2},{2,3},{2,4},{3,4}};
-
-	IBMIRTransformation t(couplers);
-
+    auto t = std::make_shared<IBMIRTransformation>(couplers);
+    
 	auto f = std::make_shared<GateFunction>("foo");
 	auto x = std::make_shared<X>(0);
 	auto h = std::make_shared<Hadamard>(1);
@@ -68,7 +67,7 @@ TEST(IBMIRTransformationTester,checkCreation) {
 	auto ir = std::make_shared<GateIR>();
 	ir->addKernel(f);
 
-	auto newir = t.transform(ir);
+	auto newir = t->transform(ir);
 
 	std::stringstream ss;
 	newir->persist(ss);
