@@ -13,9 +13,9 @@
  *     names of its contributors may be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
@@ -51,18 +51,17 @@ using namespace xacc;
 namespace xacc {
 namespace quantum {
 
-
 /**
  * Wrapper for information related to the remote
  * IBM Backend.
  */
 struct IBMBackend {
-	std::string name;
-	std::string description;
-	int nQubits;
-	std::vector<std::pair<int,int>> couplers;
-	bool status = true;
-	bool isSimulator = true;
+  std::string name;
+  std::string description;
+  int nQubits;
+  std::vector<std::pair<int, int>> couplers;
+  bool status = true;
+  bool isSimulator = true;
 };
 
 /**
@@ -74,210 +73,210 @@ struct IBMBackend {
  */
 class IBMAccelerator : public RemoteAccelerator {
 public:
+  /**
+   * Create, store, and return an AcceleratorBuffer with the given
+   * variable id string and of the given number of bits.
+   * The string id serves as a unique identifier
+   * for future lookups and reuse of the AcceleratorBuffer.
+   *
+   * @param varId
+   * @param size
+   * @return
+   */
+  std::shared_ptr<AcceleratorBuffer> createBuffer(const std::string &varId,
+                                                  const int size);
 
-	/**
-	 * Create, store, and return an AcceleratorBuffer with the given
-	 * variable id string and of the given number of bits.
-	 * The string id serves as a unique identifier
-	 * for future lookups and reuse of the AcceleratorBuffer.
-	 *
-	 * @param varId
-	 * @param size
-	 * @return
-	 */
-	std::shared_ptr<AcceleratorBuffer> createBuffer(const std::string& varId,
-			const int size);
+  /**
+   * Create, store, and return an AcceleratorBuffer with the given
+   * variable id string. This method returns all available
+   * qubits for this Accelerator. The string id serves as a unique identifier
+   * for future lookups and reuse of the AcceleratorBuffer.
+   *
+   * @param varId The variable name of the created buffer
+   * @return buffer The buffer instance created.
+   */
+  virtual std::shared_ptr<AcceleratorBuffer>
+  createBuffer(const std::string &varId);
+  /**
+   * Initialize this Accelerator. This method is called
+   * by the XACC framework after an Accelerator has been
+   * requested and created. Perform any work you need
+   * done before execution here.
+   *
+   */
+  virtual void initialize();
 
-	/**
-	 * Create, store, and return an AcceleratorBuffer with the given
-	 * variable id string. This method returns all available
-	 * qubits for this Accelerator. The string id serves as a unique identifier
-	 * for future lookups and reuse of the AcceleratorBuffer.
-	 *
-	 * @param varId The variable name of the created buffer
-	 * @return buffer The buffer instance created.
-	 */
-	virtual std::shared_ptr<AcceleratorBuffer> createBuffer(
-				const std::string& varId);
-	/**
-	 * Initialize this Accelerator. This method is called
-	 * by the XACC framework after an Accelerator has been
-	 * requested and created. Perform any work you need
-	 * done before execution here.
-	 *
-	 */
-	virtual void initialize();
+  /**
+   * Return the graph structure for this Accelerator.
+   *
+   * @return connectivityGraph The graph structure of this Accelerator
+   */
+  virtual std::shared_ptr<AcceleratorGraph> getAcceleratorConnectivity();
 
-	/**
-	 * Return the graph structure for this Accelerator.
-	 *
-	 * @return connectivityGraph The graph structure of this Accelerator
-	 */
-	virtual std::shared_ptr<AcceleratorGraph> getAcceleratorConnectivity();
+  /**
+   * Return true if this Accelerator can allocated
+   * NBits number of bits.
+   * @param NBits
+   * @return
+   */
+  virtual bool isValidBufferSize(const int NBits);
 
-	/**
-	 * Return true if this Accelerator can allocated
-	 * NBits number of bits.
-	 * @param NBits
-	 * @return
-	 */
-	virtual bool isValidBufferSize(const int NBits);
+  /**
+   * This Accelerator models QPU Gate accelerators.
+   * @return
+   */
+  virtual AcceleratorType getType() { return AcceleratorType::qpu_gate; }
 
-	/**
-	 * This Accelerator models QPU Gate accelerators.
-	 * @return
-	 */
-	virtual AcceleratorType getType() {
-		return AcceleratorType::qpu_gate;
-	}
+  /**
+   * We have no need to transform the IR for this Accelerator,
+   * so return an empty list, for now.
+   * @return
+   */
+  virtual std::vector<std::shared_ptr<IRTransformation>> getIRTransformations();
 
-	/**
-	 * We have no need to transform the IR for this Accelerator,
-	 * so return an empty list, for now.
-	 * @return
-	 */
-	virtual std::vector<std::shared_ptr<IRTransformation>> getIRTransformations();
+  /**
+   * Return all relevant IBMAccelerator runtime options.
+   * Users can set the api-key, execution type, and number of triels
+   * from the command line with these options.
+   */
+  virtual std::shared_ptr<options_description> getOptions() {
+    auto desc =
+        std::make_shared<options_description>("IBM Accelerator Options");
+    desc->add_options()("ibm-api-key", value<std::string>(),
+                        "Provide the IBM API key. This is used if "
+                        "$HOME/.ibm_config is not found")(
+        "ibm-api-url",
+        "Specify the IBM Quantum Experience URL, overrides $HOME/.ibm_config "
+        ".")("ibm-backend", value<std::string>(), "Provide the backend name.")(
+        "ibm-shots", value<std::string>(),
+        "Provide the number of shots to execute.")(
+        "ibm-list-backends",
+        "List the available backends at the IBM Quantum Experience URL.")(
+        "ibm-print-queue", value<std::string>(),
+        "Print the status of the queue for the given backend");
+    return desc;
+  }
 
-	/**
-	 * Return all relevant IBMAccelerator runtime options.
-	 * Users can set the api-key, execution type, and number of triels
-	 * from the command line with these options.
-	 */
-	virtual std::shared_ptr<options_description> getOptions() {
-		auto desc = std::make_shared<options_description>(
-				"IBM Accelerator Options");
-		desc->add_options()("ibm-api-key", value<std::string>(),"Provide the IBM API key. This is used if $HOME/.ibm_config is not found")
-				("ibm-api-url", "Specify the IBM Quantum Experience URL, overrides $HOME/.ibm_config .")
-				("ibm-backend",	value<std::string>(), "Provide the backend name.")
-				("ibm-shots", value<std::string>(), "Provide the number of shots to execute.")
-				("ibm-list-backends", "List the available backends at the IBM Quantum Experience URL.")
-				("ibm-print-queue",value<std::string>(), "Print the status of the queue for the given backend");
-		return desc;
-	}
+  /**
+   * Given user-input command line options, perform
+   * some operation. Returns true if runtime should exit,
+   * false otherwise.
+   *
+   * @param map The mapping of options to values
+   * @return exit True if exit, false otherwise
+   */
+  virtual bool handleOptions(variables_map &map) {
+    if (map.count("ibm-list-backends")) {
+      initialize();
+      XACCLogger::instance()->enqueueLog("");
+      for (auto s : availableBackends) {
+        XACCLogger::instance()->enqueueLog(
+            "Available IBM Backend: " + std::string(s.first) + " [" +
+            (s.second.status ? "on" : "off") + "]");
+      }
+      return true;
+    } else if (map.count("ibm-print-queue")) {
+      initialize();
+      auto backend = map["ibm-print-queue"].as<std::string>();
+      XACCLogger::instance()->enqueueLog("");
+      XACCLogger::instance()->enqueueLog(
+          "Queue Status for " + backend + ": " +
+          handleExceptionRestClientGet(remoteUrl, "/api/Backends/" + backend +
+                                                      "/queue/status"));
+      return true;
+    }
+    return false;
+  }
 
-	/**
-	 * Given user-input command line options, perform
-	 * some operation. Returns true if runtime should exit,
-	 * false otherwise.
-	 *
-	 * @param map The mapping of options to values
-	 * @return exit True if exit, false otherwise
-	 */
-	virtual bool handleOptions(variables_map& map) {
-		if (map.count("ibm-list-backends")) {
-			initialize();
-			XACCLogger::instance()->enqueueLog("");
-			for (auto s : availableBackends) {
-				XACCLogger::instance()->enqueueLog("Available IBM Backend: " +
-						std::string(s.first) + " [" +
-						(s.second.status ? "on" : "off")
-						+ "]");
-			}
-			return true;
-		} else if (map.count("ibm-print-queue")) {
-			initialize();
-			auto backend = map["ibm-print-queue"].as<std::string>();
-			XACCLogger::instance()->enqueueLog("");
-			XACCLogger::instance()->enqueueLog("Queue Status for " + backend +": " 
-					+ handleExceptionRestClientGet(remoteUrl, "/api/Backends/"+backend+"/queue/status"));
-			return true;
-		}
-		return false;
-	}
+  /**
+   * Return the name of this instance.
+   *
+   * @return name The string name
+   */
+  virtual const std::string name() const { return "ibm"; }
 
-	/**
-	 * Return the name of this instance.
-	 *
-	 * @return name The string name
-	 */
-	virtual const std::string name() const {
-		return "ibm";
-	}
+  /**
+   * Return the description of this instance
+   * @return description The description of this object.
+   */
+  virtual const std::string description() const {
+    return "The IBM Accelerator interacts with the remote IBM "
+           "Quantum Experience to launch XACC quantum kernels.";
+  }
 
-	/**
-	 * Return the description of this instance
-	 * @return description The description of this object.
-	 */
-	virtual const std::string description() const {
-		return "The IBM Accelerator interacts with the remote IBM "
-				"Quantum Experience to launch XACC quantum kernels.";
-	}
+  /**
+   * take ir, generate json post string
+   */
+  virtual const std::string
+  processInput(std::shared_ptr<AcceleratorBuffer> buffer,
+               std::vector<std::shared_ptr<Function>> functions);
 
-	/**
-	 * take ir, generate json post string
-	 */
-	virtual const std::string processInput(
-			std::shared_ptr<AcceleratorBuffer> buffer,
-			std::vector<std::shared_ptr<Function>> functions);
+  /**
+   * take response and create
+   */
+  virtual std::vector<std::shared_ptr<AcceleratorBuffer>>
+  processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
+                  const std::string &response);
 
-	/**
-	 * take response and create
-	 */
-	virtual std::vector<std::shared_ptr<AcceleratorBuffer>> processResponse(
-			std::shared_ptr<AcceleratorBuffer> buffer,
-			const std::string& response);
+  IBMAccelerator() : RemoteAccelerator() {}
 
-	IBMAccelerator() :RemoteAccelerator() {}
+  IBMAccelerator(std::shared_ptr<Client> client) : RemoteAccelerator(client) {}
 
-	IBMAccelerator(std::shared_ptr<Client> client) : RemoteAccelerator(client) {}
+  virtual bool isPhysical();
 
-	virtual bool isPhysical();
-
-	/**
-	 * The destructor
-	 */
-	virtual ~IBMAccelerator() {}
+  /**
+   * The destructor
+   */
+  virtual ~IBMAccelerator() {}
 
 private:
+  void computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffer> buffer);
 
-	void computeMeasurementAccuracy(std::shared_ptr<AcceleratorBuffer> buffer);
+  bool computedMeasurementAccuracy = false;
 
-	bool computedMeasurementAccuracy = false;
+  /**
+   * Private utility to search for the IBM
+   * API key in $HOME/.ibm_config, $IBM_CONFIG,
+   * or --ibm-api-key command line arg
+   */
+  void searchAPIKey(std::string &key, std::string &url, std::string &hub,
+                    std::string &group, std::string &project);
 
-	/**
-	 * Private utility to search for the IBM
-	 * API key in $HOME/.ibm_config, $IBM_CONFIG,
-	 * or --ibm-api-key command line arg
-	 */
-	void searchAPIKey(std::string& key, std::string& url, std::string& hub, std::string& group, std::string& project);
+  /**
+   * Private utility to search for key in the config
+   * file.
+   */
+  void findApiKeyInFile(std::string &key, std::string &url, std::string &hub,
+                        std::string &group, std::string &project,
+                        boost::filesystem::path &p);
 
-	/**
-	 * Private utility to search for key in the config
-	 * file.
-	 */
-	void findApiKeyInFile(std::string& key, std::string& url, std::string& hub, std::string& group, std::string& project, boost::filesystem::path &p);
+  /**
+   * Reference to the temporary API Token for
+   * this IBM Quantum Experience session.
+   */
+  std::string currentApiToken;
 
-	/**
-	 * Reference to the temporary API Token for
-	 * this IBM Quantum Experience session.
-	 */
-	std::string currentApiToken;
+  /**
+   * The IBM Quantum Experience URL
+   */
+  std::string url;
 
-	/**
-	 * The IBM Quantum Experience URL
-	 */
-	std::string url;
+  std::string hub;
+  std::string group;
+  std::string project;
 
-    std::string hub;
-    std::string group;
-    std::string project;
-    
-	/**
-	 * Mapping of available backend name to an actual
-	 * IBMBackend struct data structure.
-	 */
-	std::map<std::string, IBMBackend> availableBackends;
+  /**
+   * Mapping of available backend name to an actual
+   * IBMBackend struct data structure.
+   */
+  std::map<std::string, IBMBackend> availableBackends;
 
-	std::map<int, std::vector<int>> measurementSupports;
+  std::map<int, std::vector<int>> measurementSupports;
 
-	IBMBackend chosenBackend;
-
+  IBMBackend chosenBackend;
 };
 
-}
-}
-
-
-
+} // namespace quantum
+} // namespace xacc
 
 #endif
