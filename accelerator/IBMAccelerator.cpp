@@ -31,7 +31,6 @@
 #include "IBMAccelerator.hpp"
 
 #include "XACC.hpp"
-#include "IBMAcceleratorBuffer.hpp"
 
 namespace xacc {
 namespace quantum {
@@ -43,7 +42,7 @@ IBMAccelerator::createBuffer(const std::string &varId) {
   }
 
   std::shared_ptr<AcceleratorBuffer> buffer =
-      std::make_shared<IBMAcceleratorBuffer>(varId, 30);
+      std::make_shared<AcceleratorBuffer>(varId, 30);
 
   storeBuffer(varId, buffer);
   return buffer;
@@ -56,7 +55,7 @@ IBMAccelerator::createBuffer(const std::string &varId, const int size) {
   }
 
   std::shared_ptr<AcceleratorBuffer> buffer =
-      std::make_shared<IBMAcceleratorBuffer>(varId, size);
+      std::make_shared<AcceleratorBuffer>(varId, size);
 
   storeBuffer(varId, buffer);
   return buffer;
