@@ -369,6 +369,8 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       }
     }
 
+    buffer->addExtraInfo("time", ExtraInfo(qasmsArray[0]["result"]["data"]["time"].GetDouble()));
+
     measurementSupports.clear();
     // Return empty list since data is stored on the given buffer.
     return std::vector<std::shared_ptr<AcceleratorBuffer>>{};
@@ -389,6 +391,8 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       auto tmpBuffer =
           createBuffer(buffer->name() + std::to_string(i), buffer->size());
 
+      auto time = qasmsArray[i]["result"]["data"]["time"].GetDouble();
+      tmpBuffer->addExtraInfo("time", ExtraInfo(time));
       const Value &counts = qasmsArray[i]["result"]["data"]["counts"];
       for (Value::ConstMemberIterator itr = counts.MemberBegin();
            itr != counts.MemberEnd(); ++itr) {
