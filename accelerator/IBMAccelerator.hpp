@@ -62,6 +62,8 @@ struct IBMBackend {
   std::vector<std::pair<int, int>> couplers;
   bool status = true;
   bool isSimulator = true;
+  std::string gateSet = "";
+  std::string basisGates = "";
 };
 
 /**

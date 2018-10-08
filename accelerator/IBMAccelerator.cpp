@@ -134,7 +134,7 @@ void IBMAccelerator::initialize() {
   response =
       handleExceptionRestClientGet(url, getBackendPath + currentApiToken);
 
-  // xacc::info("DEVICES: " + response);
+  xacc::info("DEVICES: " + response);
   d.Parse(response);
 
   auto backendArray = d.GetArray();
@@ -156,6 +156,9 @@ void IBMAccelerator::initialize() {
         backend.couplers.push_back(
             std::make_pair(couplers[j][0].GetInt(), couplers[j][1].GetInt()));
       }
+
+      backend.gateSet = b["gateSet"].GetString();
+      backend.basisGates = b["basisGates"].GetString();
     }
 
     availableBackends.insert(std::make_pair(backend.name, backend));
@@ -322,21 +325,19 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
     d.Parse(getResponse);
     if (d.HasMember("infoQueue")) {
       auto info = d["infoQueue"].GetObject();
-      //			std::cout << "\r ";
       std::cout << "\r"
                 << "Job Response: " << d["status"].GetString()
-                << ", queue: " << d["infoQueue"]["status"].GetString();
+                << ", queue: " << d["infoQueue"]["status"].GetString() << "\n";
       if (info.HasMember("position")) {
-        std::cout << " position " << d["infoQueue"]["position"].GetInt()
+        std::cout << " position " << d["infoQueue"]["position"].GetInt() << "\n"
                   << std::flush;
       }
     } else {
-      //			std::cout << "\r ";
       std::cout << "\r"
-                << "Job Response: " << d["status"].GetString() << std::flush;
+                << "Job Response: " << d["status"].GetString() << "\n"
+                << std::flush;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    //		std::cout << "GetResponse: " << getResponse << "\n";
   }
 
   std::cout << std::endl;
@@ -369,7 +370,12 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       }
     }
 
-    buffer->addExtraInfo("time", ExtraInfo(qasmsArray[0]["result"]["data"]["time"].GetDouble()));
+    buffer->addExtraInfo(
+        "time", ExtraInfo(qasmsArray[0]["result"]["data"]["time"].GetDouble()));
+    if (!chosenBackend.isSimulator) {
+      buffer->addExtraInfo("gateSet", chosenBackend.gateSet);
+      buffer->addExtraInfo("basisGates", chosenBackend.basisGates);
+    }
 
     measurementSupports.clear();
     // Return empty list since data is stored on the given buffer.
@@ -393,6 +399,11 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
 
       auto time = qasmsArray[i]["result"]["data"]["time"].GetDouble();
       tmpBuffer->addExtraInfo("time", ExtraInfo(time));
+      if (!chosenBackend.isSimulator) {
+        tmpBuffer->addExtraInfo("gateSet", chosenBackend.gateSet);
+        tmpBuffer->addExtraInfo("basisGates", chosenBackend.basisGates);
+      }
+
       const Value &counts = qasmsArray[i]["result"]["data"]["counts"];
       for (Value::ConstMemberIterator itr = counts.MemberBegin();
            itr != counts.MemberEnd(); ++itr) {
