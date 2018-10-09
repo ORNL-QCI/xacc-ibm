@@ -157,8 +157,46 @@ void IBMAccelerator::initialize() {
             std::make_pair(couplers[j][0].GetInt(), couplers[j][1].GetInt()));
       }
 
-      backend.gateSet = b["gateSet"].GetString();
-      backend.basisGates = b["basisGates"].GetString();
+      if (b.HasMember("gateSet")) {
+        backend.gateSet = b["gateSet"].GetString();
+        backend.basisGates = b["basisGates"].GetString();
+      }
+    }
+
+    if (!backend.isSimulator && !hub.empty()) {
+      std::string getBackendCalibrationPath;
+      if (!hub.empty()) {
+        getBackendCalibrationPath =
+            "/api/Network/" + hub + "/devices/" + backend.name +
+            "/calibration?access_token=" + currentApiToken;
+      } else {
+        getBackendCalibrationPath =
+            "/api/Backends/" + backend.name +
+            "/calibration?access_token=" + currentApiToken;
+      }
+
+      auto response =
+          handleExceptionRestClientGet(url, getBackendCalibrationPath);
+      Document d;
+      d.Parse(response);
+
+      if (d.HasMember("qubits") && d.HasMember("multiQubitGates")) {
+        auto qubits = d["qubits"].GetArray();
+        auto mqGates = d["multiQubitGates"].GetArray();
+        for (int i = 0; i < qubits.Size(); i++) {
+          const auto &value = qubits[i]["readoutError"]["value"].GetDouble();
+          const auto &error = qubits[i]["gateError"]["value"].GetDouble();
+          backend.readoutErrors.push_back(value);
+          backend.gateErrors.push_back(error);
+        }
+
+        for (int i = 0; i < mqGates.Size(); i++) {
+          const auto &name = mqGates[i]["name"].GetString();
+          const auto &error = mqGates[i]["gateError"]["value"].GetDouble();
+          backend.multiQubitGates.push_back(name);
+          backend.multiQubitGateErrors.push_back(error);
+        }
+      }
     }
 
     availableBackends.insert(std::make_pair(backend.name, backend));
@@ -284,7 +322,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
   }
 
   return jsonStr;
-}
+} // namespace quantum
 
 /**
  * take response and create
@@ -375,6 +413,11 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
     if (!chosenBackend.isSimulator) {
       buffer->addExtraInfo("gateSet", chosenBackend.gateSet);
       buffer->addExtraInfo("basisGates", chosenBackend.basisGates);
+      buffer->addExtraInfo("readoutErrors", chosenBackend.readoutErrors);
+      buffer->addExtraInfo("gateErrors", chosenBackend.gateErrors);
+      buffer->addExtraInfo("multiQubitGates", chosenBackend.multiQubitGates);
+      buffer->addExtraInfo("multiQubitGateErrors",
+                           chosenBackend.multiQubitGateErrors);
     }
 
     measurementSupports.clear();
@@ -383,6 +426,16 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
   } else {
 
     std::vector<std::shared_ptr<AcceleratorBuffer>> buffers;
+
+    if (!chosenBackend.isSimulator) {
+      buffer->addExtraInfo("gateSet", chosenBackend.gateSet);
+      buffer->addExtraInfo("basisGates", chosenBackend.basisGates);
+      buffer->addExtraInfo("readoutErrors", chosenBackend.readoutErrors);
+      buffer->addExtraInfo("gateErrors", chosenBackend.gateErrors);
+      buffer->addExtraInfo("multiQubitGates", chosenBackend.multiQubitGates);
+      buffer->addExtraInfo("multiQubitGateErrors",
+                           chosenBackend.multiQubitGateErrors);
+    }
 
     for (SizeType i = 0; i < qasmsArray.Size(); i++) {
 
@@ -399,10 +452,6 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
 
       auto time = qasmsArray[i]["result"]["data"]["time"].GetDouble();
       tmpBuffer->addExtraInfo("time", ExtraInfo(time));
-      if (!chosenBackend.isSimulator) {
-        tmpBuffer->addExtraInfo("gateSet", chosenBackend.gateSet);
-        tmpBuffer->addExtraInfo("basisGates", chosenBackend.basisGates);
-      }
 
       const Value &counts = qasmsArray[i]["result"]["data"]["counts"];
       for (Value::ConstMemberIterator itr = counts.MemberBegin();

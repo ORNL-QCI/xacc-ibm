@@ -31,18 +31,18 @@
 #ifndef QUANTUM_GATE_ACCELERATORS_IBMACCELERATOR_HPP_
 #define QUANTUM_GATE_ACCELERATORS_IBMACCELERATOR_HPP_
 
-#include "RemoteAccelerator.hpp"
+#include "IBMIRTransformation.hpp"
 #include "InstructionIterator.hpp"
+#include "OpenQasmVisitor.hpp"
+#include "RemoteAccelerator.hpp"
 #include "RuntimeOptions.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
-#include "OpenQasmVisitor.hpp"
-#include "IBMIRTransformation.hpp"
 
 #define RAPIDJSON_HAS_STDSTRING 1
 
-#include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
 
 using namespace rapidjson;
 
@@ -64,6 +64,10 @@ struct IBMBackend {
   bool isSimulator = true;
   std::string gateSet = "";
   std::string basisGates = "";
+  std::vector<double> readoutErrors;
+  std::vector<double> gateErrors;
+  std::vector<std::string> multiQubitGates;
+  std::vector<double> multiQubitGateErrors;
 };
 
 /**
