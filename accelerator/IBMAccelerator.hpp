@@ -68,6 +68,9 @@ struct IBMBackend {
   std::vector<double> gateErrors;
   std::vector<std::string> multiQubitGates;
   std::vector<double> multiQubitGateErrors;
+  std::vector<double> T1s;
+  std::vector<double> T2s;
+  std::vector<double> frequencies;
 };
 
 /**

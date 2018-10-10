@@ -134,7 +134,7 @@ void IBMAccelerator::initialize() {
   response =
       handleExceptionRestClientGet(url, getBackendPath + currentApiToken);
 
-  xacc::info("DEVICES: " + response);
+  //   xacc::info("DEVICES: " + response);
   d.Parse(response);
 
   auto backendArray = d.GetArray();
@@ -164,15 +164,21 @@ void IBMAccelerator::initialize() {
     }
 
     if (!backend.isSimulator && !hub.empty()) {
-      std::string getBackendCalibrationPath;
+      std::string getBackendCalibrationPath, getBackendParametersPath;
       if (!hub.empty()) {
         getBackendCalibrationPath =
             "/api/Network/" + hub + "/devices/" + backend.name +
             "/calibration?access_token=" + currentApiToken;
+        getBackendParametersPath =
+            "/api/Network/" + hub + "/devices/" + backend.name +
+            "/parameters?access_token=" + currentApiToken;
       } else {
         getBackendCalibrationPath =
             "/api/Backends/" + backend.name +
             "/calibration?access_token=" + currentApiToken;
+        getBackendParametersPath =
+            "/api/Backends/" + backend.name +
+            "/parameters?access_token=" + currentApiToken;
       }
 
       auto response =
@@ -197,6 +203,21 @@ void IBMAccelerator::initialize() {
           backend.multiQubitGateErrors.push_back(error);
         }
       }
+
+      response = handleExceptionRestClientGet(url, getBackendParametersPath);
+      d.Parse(response);
+
+      if (d.HasMember("qubits")) {
+        auto qubits = d["qubits"].GetArray();
+        for (int i = 0; i < qubits.Size(); i++) {
+          const auto &t1 = qubits[i]["T1"]["value"].GetDouble();
+          const auto &t2 = qubits[i]["T2"]["value"].GetDouble();
+          const auto &freq = qubits[i]["frequency"]["value"].GetDouble();
+          backend.T1s.push_back(t1);
+          backend.T2s.push_back(t2);
+          backend.frequencies.push_back(freq);
+        }
+      }
     }
 
     availableBackends.insert(std::make_pair(backend.name, backend));
@@ -205,7 +226,7 @@ void IBMAccelerator::initialize() {
   // Set these for RemoteAccelerator.execute
   postPath = postJobPath + currentApiToken;
   remoteUrl = url;
-}
+} // namespace quantum
 
 bool IBMAccelerator::isPhysical() {
   std::string backendName = "ibmq_qasm_simulator";
@@ -418,6 +439,10 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       buffer->addExtraInfo("multiQubitGates", chosenBackend.multiQubitGates);
       buffer->addExtraInfo("multiQubitGateErrors",
                            chosenBackend.multiQubitGateErrors);
+      buffer->addExtraInfo("frequencies", chosenBackend.frequencies);
+      buffer->addExtraInfo("T1", chosenBackend.T1s);
+      buffer->addExtraInfo("T2", chosenBackend.T2s);
+
     }
 
     measurementSupports.clear();
@@ -435,6 +460,10 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       buffer->addExtraInfo("multiQubitGates", chosenBackend.multiQubitGates);
       buffer->addExtraInfo("multiQubitGateErrors",
                            chosenBackend.multiQubitGateErrors);
+      buffer->addExtraInfo("frequencies", chosenBackend.frequencies);
+      buffer->addExtraInfo("T1", chosenBackend.T1s);
+      buffer->addExtraInfo("T2", chosenBackend.T2s);
+
     }
 
     for (SizeType i = 0; i < qasmsArray.Size(); i++) {
@@ -464,6 +493,24 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
 
         if (chosenBackend.isSimulator) {
           boost::replace_all(bitStr, " ", "");
+
+          // xacc::info("BITSTR BEFORE: " + bitStr);
+          if (bitStr.length() < buffer->size()) {
+            std::string bitString = "";
+            for (int i = 0; i < buffer->size(); ++i)
+              bitString += "0";
+
+            auto supports = measurementSupports[i];
+            std::sort(supports.begin(), supports.end());
+
+            int counter = 0;
+            for (int i = bitStr.length() - 1; i >= 0; i--) {
+              bitString[buffer->size() - 1 - supports[counter]] = bitStr[i];
+              counter++;
+            }
+
+            bitStr = bitString;
+          }
         }
 
         xacc::info("IBM Results: " + std::string(bitStr) + ":" +
