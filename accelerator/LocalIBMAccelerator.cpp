@@ -90,11 +90,13 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
     std::shared_ptr<AcceleratorBuffer> buffer,
     const std::vector<std::shared_ptr<Function>> functions) {
 
+  std::vector<std::string> names;
   json j;
   int kernelCounter = 0;
   for (auto kernel : functions) {
     auto visitor = std::make_shared<OpenQasmVisitor>(buffer->size());
-
+    names.push_back(kernel->name());
+    
     json h, circuit, config;
     for (int i = 0; i < buffer->size(); i++) {
       h["qubit_labels"].push_back({"q", i});
@@ -189,8 +191,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
   // N Measurements
   kernelCounter = 0;
   for (auto &result : results) {
-    auto tmpBuffer = createBuffer(
-        buffer->name() + std::to_string(kernelCounter), buffer->size());
+    auto tmpBuffer = createBuffer(names[kernelCounter], buffer->size());
     auto measureSupports = measurementSupports[kernelCounter];
     if (measureSupports.size() < buffer->size()) {
 

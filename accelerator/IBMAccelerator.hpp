@@ -282,6 +282,8 @@ private:
 
   std::map<int, std::vector<int>> measurementSupports;
 
+  std::vector<std::string> kernelNames;
+  
   IBMBackend chosenBackend;
 };
 

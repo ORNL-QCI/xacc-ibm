@@ -303,15 +303,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
 
     jsonStr += "{\"qasm\": \"" + qasmStr + "\"},";
 
-    //		xacc::info("OpenQasm: " + qasmStr);
-    if (xacc::optionExists("ibm-write-openqasm")) {
-      auto dir = xacc::getOption("ibm-write-openqasm");
-      boost::replace_all(qasmStr, "\\n", "\n");
-      std::ofstream out(kernel->name() + ".openqasm");
-      out << qasmStr;
-      out.close();
-    }
-
+    kernelNames.push_back(kernel->name());
     kernelCounter++;
   }
 
@@ -431,6 +423,8 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
 
     buffer->addExtraInfo(
         "time", ExtraInfo(qasmsArray[0]["result"]["data"]["time"].GetDouble()));
+    buffer->addExtraInfo("kernel", ExtraInfo(kernelNames[0]));
+    
     if (!chosenBackend.isSimulator) {
       buffer->addExtraInfo("gateSet", chosenBackend.gateSet);
       buffer->addExtraInfo("basisGates", chosenBackend.basisGates);
@@ -477,10 +471,11 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       xacc::info("Measured Qubits: " + sss.str());
 
       auto tmpBuffer =
-          createBuffer(buffer->name() + std::to_string(i), buffer->size());
+          createBuffer(kernelNames[i], buffer->size());
 
       auto time = qasmsArray[i]["result"]["data"]["time"].GetDouble();
       tmpBuffer->addExtraInfo("time", ExtraInfo(time));
+    //   tmpBuffer->addExtraInfo("kernel", ExtraInfo(kernelNames[i]));
 
       const Value &counts = qasmsArray[i]["result"]["data"]["counts"];
       for (Value::ConstMemberIterator itr = counts.MemberBegin();
