@@ -75,10 +75,11 @@ public:
   virtual std::shared_ptr<options_description> getOptions() {
     auto desc =
         std::make_shared<options_description>("Local IBM Simulator Options");
-    desc->add_options()("local-ibm-m-error-probs", value<std::string>(),
-                        "Provide the number of shots to execute. This is a "
-                        "list of pairs, [[ap01,ap10],[bp01,bp10],..., provided "
-                        "as a string of ap01,ap10;bp01,bp10;...");
+    desc->add_options()("local-ibm-ro-error", value<std::string>(),
+                        "Provide the p(1|0), p(0|1).")
+                        ("u-p-depol",value<std::string>(), "")
+                        ("cx-p-depol", value<std::string>(), "");
+                        // ("cx-u-error", value<std::string>(), "");
     return desc;
   }
 

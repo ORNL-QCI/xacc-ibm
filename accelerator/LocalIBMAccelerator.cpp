@@ -96,7 +96,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
   for (auto kernel : functions) {
     auto visitor = std::make_shared<OpenQasmVisitor>(buffer->size());
     names.push_back(kernel->name());
-    
+
     json h, circuit, config;
     for (int i = 0; i < buffer->size(); i++) {
       h["qubit_labels"].push_back({"q", i});
@@ -155,8 +155,8 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
                          ? std::stoi(xacc::getOption("ibm-shots"))
                          : 1024;
 
-  if (xacc::optionExists("local-ibm-m-error-probs")) {
-    auto probStr = xacc::getOption("local-ibm-m-error-probs");
+  if (xacc::optionExists("local-ibm-ro-error")) {
+    auto probStr = xacc::getOption("local-ibm-ro-error");
     std::vector<std::string> split;
     boost::split(split, probStr, boost::is_any_of(","));
     config2["noise_params"]["readout_error"] = {std::stod(split[0])};
@@ -165,10 +165,30 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
     }
   }
 
+  if (xacc::optionExists("u-p-depol")) {
+      auto u_depol = std::stod(xacc::getOption("u-p-depol"));
+      config2["noise_params"]["U"]["p_depol"] = u_depol;
+  }
+
+  if (xacc::optionExists("cx-p-depol")) {
+      auto cx_depol = std::stod(xacc::getOption("cx-p-depol"));
+      config2["noise_params"]["CX"]["p_depol"] = cx_depol;
+  }
+
+//   if (xacc::optionExists("cx-u-error")) {
+//       auto cx_uerror_str = xacc::getOption("cx-u-error");
+//       for (int i = 0; i < cx_uerror_str.size(); i++) {
+
+          
+          
+//       }
+      
+//     //   config2["noise_params"]["CX"]["U_error"] = cx_uerror;
+//   }
   j["config"] = config2;
   j["id"] = "fakeid";
 
-  //   std::cout << "JSON:\n" << j.dump(4) << "\n";
+//   std::cout << "JSON:\n" << j.dump(4) << "\n";
 
   std::string response = "";
   try {
@@ -188,50 +208,38 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
 
   json results = json::parse(response)["result"];
 
+//   std::cout << "HELLO RESULTS: " << response << "\n\n"
+//             << results.dump(4) << "\n";
   // N Measurements
   kernelCounter = 0;
   for (auto &result : results) {
     auto tmpBuffer = createBuffer(names[kernelCounter], buffer->size());
     auto measureSupports = measurementSupports[kernelCounter];
-    if (measureSupports.size() < buffer->size()) {
 
-      // Create mapping of measured qubits to
-      // returned ibm bit string index
-      std::map<int, int> qbitToStrIdx;
-      auto nMeasures = measureSupports.size() - 1;
-      for (int j = buffer->size(); j >= 0; j--) {
-        if (std::find(measureSupports.begin(), measureSupports.end(), j) !=
-            measureSupports.end()) {
-          qbitToStrIdx.insert({j, nMeasures});
-          nMeasures--;
-        }
+    int countInt = 0;
+    auto counts = result["data"]["counts"];
+    for (auto it = counts.begin(); it != counts.end(); ++it) {
+      countInt = it.value().get<int>();
+      auto bitString = it.key();
+
+      if (bitString.length() < buffer->size()) {
+          
+          std::string s = "";
+          for (int i = 0; i < buffer->size(); i++) s += "0";
+
+          std::sort(measureSupports.begin(), measureSupports.end());
+          int counter = 0;
+          for (int i = bitString.length()-1; i >= 0; i--) {
+              auto bit = bitString[i];
+              s[buffer->size()-1-measureSupports[counter]] = bit;
+              counter++;
+          }
+
+          bitString = s;
       }
 
-      int countInt = 0;
-      auto counts = result["data"]["counts"];
-      for (auto it = counts.begin(); it != counts.end(); ++it) {
-        std::string bitString = "";
-        for (int i = 0; i < buffer->size(); i++)
-          bitString += "0";
-
-        for (auto &qbitMeasured : measurementSupports[kernelCounter]) {
-          auto idx = buffer->size() - 1 - qbitMeasured;
-          bitString[idx] = it.key()[qbitToStrIdx[idx]];
-        }
-        countInt = it.value().get<int>();
-        for (int i = 0; i < countInt; i++)
-          tmpBuffer->appendMeasurement(bitString);
-      }
-
-    } else {
-      int countInt = 0;
-      auto counts = result["data"]["counts"];
-      for (auto it = counts.begin(); it != counts.end(); ++it) {
-        countInt = it.value().get<int>();
-        auto bitString = it.key();
-        for (int i = 0; i < countInt; i++)
-          tmpBuffer->appendMeasurement(bitString);
-      }
+      for (int i = 0; i < countInt; i++)
+        tmpBuffer->appendMeasurement(bitString);
     }
 
     kernelCounter++;

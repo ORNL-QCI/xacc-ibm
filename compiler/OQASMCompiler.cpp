@@ -72,7 +72,22 @@ namespace xacc {
 
         const std::string OQASMCompiler::translate(const std::string &bufferVariable,
                                                    std::shared_ptr<xacc::Function> function) {
-            auto visitor = std::make_shared<OpenQasmVisitor>();
+            // Get the number of qubits
+            int maxBit = 0;
+            InstructionIterator temp(function);
+            while (temp.hasNext()) {
+                auto nextInst = temp.next();
+                if (nextInst->isEnabled()) {
+                    for (auto& b : nextInst->bits()) {
+                        if (b > maxBit) {
+                            maxBit = b;
+                        }
+                    }
+                }
+            }
+            auto nQubits = maxBit+1;
+            
+            auto visitor = std::make_shared<OpenQasmVisitor>(nQubits);
             InstructionIterator it(function);
             while (it.hasNext()) {
                 auto nextInst = it.next();

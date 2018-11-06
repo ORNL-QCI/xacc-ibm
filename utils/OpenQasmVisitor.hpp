@@ -28,8 +28,8 @@
  *   Initial API and implementation - Alex McCaskey
  *
  **********************************************************************************/
-#ifndef QUANTUM_GATE_ACCELERATORS_RIGETTI_OpenQasmVISITOR_HPP_
-#define QUANTUM_GATE_ACCELERATORS_RIGETTI_OpenQasmVISITOR_HPP_
+#ifndef QUANTUM_GATE_ACCELERATORS_OpenQasmVISITOR_HPP_
+#define QUANTUM_GATE_ACCELERATORS_OpenQasmVISITOR_HPP_
 
 #include <memory>
 #include "AllGateVisitor.hpp"
