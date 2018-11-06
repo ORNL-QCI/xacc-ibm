@@ -100,132 +100,135 @@ IBMAccelerator::getIRTransformations() {
 }
 
 void IBMAccelerator::initialize() {
-  std::string jsonStr = "", apiKey = "";
-  auto options = RuntimeOptions::instance();
-  searchAPIKey(apiKey, url, hub, group, project);
+  if (!initialized) {
+    std::string jsonStr = "", apiKey = "";
+    auto options = RuntimeOptions::instance();
+    searchAPIKey(apiKey, url, hub, group, project);
 
-  std::string getBackendPath = "/api/Backends?access_token=";
-  std::string postJobPath = "/api/Jobs?access_token=";
-  if (!hub.empty()) {
-    getBackendPath = "/api/Network/" + hub + "/Groups/" + group + "/Projects/" +
-                     project + "/devices?access_token=";
-    postJobPath = "/api/Network/" + hub + "/Groups/" + group + "/Projects/" +
-                  project + "/jobs?access_token=";
-  }
-
-  std::string tokenParam = "apiToken=" + apiKey;
-
-  std::map<std::string, std::string> headers{
-      {"Content-Type", "application/x-www-form-urlencoded"},
-      {"Connection", "keep-alive"},
-      {"Content-Length", std::to_string(tokenParam.length())}};
-
-  auto response = handleExceptionRestClientPost(
-      url, "/api/users/loginWithToken", tokenParam, headers);
-
-  if (boost::contains(response, "error")) {
-    xacc::error("Error received from IBM\n" + response);
-  }
-
-  Document d;
-  d.Parse(response);
-  currentApiToken = d["id"].GetString();
-
-  response =
-      handleExceptionRestClientGet(url, getBackendPath + currentApiToken);
-
-  //   xacc::info("DEVICES: " + response);
-  d.Parse(response);
-
-  auto backendArray = d.GetArray();
-  for (auto &b : backendArray) {
-    IBMBackend backend;
-    if (b.HasMember("nQubits")) {
-      backend.nQubits = b["nQubits"].GetInt();
-    }
-    backend.name = b["name"].GetString();
-    backend.description =
-        b.HasMember("description") ? b["description"].GetString() : "";
-    backend.status = !boost::contains(b["status"].GetString(), "off");
-
-    backend.isSimulator = b["simulator"].GetBool();
-    if (!backend.isSimulator && b.HasMember("couplingMap") &&
-        b["couplingMap"].IsArray()) {
-      auto couplers = b["couplingMap"].GetArray();
-      for (int j = 0; j < couplers.Size(); j++) {
-        backend.couplers.push_back(
-            std::make_pair(couplers[j][0].GetInt(), couplers[j][1].GetInt()));
-      }
-
-      if (b.HasMember("gateSet")) {
-        backend.gateSet = b["gateSet"].GetString();
-        backend.basisGates = b["basisGates"].GetString();
-      }
+    std::string getBackendPath = "/api/Backends?access_token=";
+    std::string postJobPath = "/api/Jobs?access_token=";
+    if (!hub.empty()) {
+      getBackendPath = "/api/Network/" + hub + "/Groups/" + group +
+                       "/Projects/" + project + "/devices?access_token=";
+      postJobPath = "/api/Network/" + hub + "/Groups/" + group + "/Projects/" +
+                    project + "/jobs?access_token=";
     }
 
-    if (!backend.isSimulator && !hub.empty()) {
-      std::string getBackendCalibrationPath, getBackendParametersPath;
-      if (!hub.empty()) {
-        getBackendCalibrationPath =
-            "/api/Network/" + hub + "/devices/" + backend.name +
-            "/calibration?access_token=" + currentApiToken;
-        getBackendParametersPath =
-            "/api/Network/" + hub + "/devices/" + backend.name +
-            "/parameters?access_token=" + currentApiToken;
-      } else {
-        getBackendCalibrationPath =
-            "/api/Backends/" + backend.name +
-            "/calibration?access_token=" + currentApiToken;
-        getBackendParametersPath =
-            "/api/Backends/" + backend.name +
-            "/parameters?access_token=" + currentApiToken;
+    std::string tokenParam = "apiToken=" + apiKey;
+
+    std::map<std::string, std::string> headers{
+        {"Content-Type", "application/x-www-form-urlencoded"},
+        {"Connection", "keep-alive"},
+        {"Content-Length", std::to_string(tokenParam.length())}};
+
+    auto response = handleExceptionRestClientPost(
+        url, "/api/users/loginWithToken", tokenParam, headers);
+
+    if (boost::contains(response, "error")) {
+      xacc::error("Error received from IBM\n" + response);
+    }
+
+    Document d;
+    d.Parse(response);
+    currentApiToken = d["id"].GetString();
+
+    response =
+        handleExceptionRestClientGet(url, getBackendPath + currentApiToken);
+
+    //   xacc::info("DEVICES: " + response);
+    d.Parse(response);
+
+    auto backendArray = d.GetArray();
+    for (auto &b : backendArray) {
+      IBMBackend backend;
+      if (b.HasMember("nQubits")) {
+        backend.nQubits = b["nQubits"].GetInt();
       }
+      backend.name = b["name"].GetString();
+      backend.description =
+          b.HasMember("description") ? b["description"].GetString() : "";
+      backend.status = !boost::contains(b["status"].GetString(), "off");
 
-      auto response =
-          handleExceptionRestClientGet(url, getBackendCalibrationPath);
-      Document d;
-      d.Parse(response);
-
-      if (d.HasMember("qubits") && d.HasMember("multiQubitGates")) {
-        auto qubits = d["qubits"].GetArray();
-        auto mqGates = d["multiQubitGates"].GetArray();
-        for (int i = 0; i < qubits.Size(); i++) {
-          const auto &value = qubits[i]["readoutError"]["value"].GetDouble();
-          const auto &error = qubits[i]["gateError"]["value"].GetDouble();
-          backend.readoutErrors.push_back(value);
-          backend.gateErrors.push_back(error);
+      backend.isSimulator = b["simulator"].GetBool();
+      if (!backend.isSimulator && b.HasMember("couplingMap") &&
+          b["couplingMap"].IsArray()) {
+        auto couplers = b["couplingMap"].GetArray();
+        for (int j = 0; j < couplers.Size(); j++) {
+          backend.couplers.push_back(
+              std::make_pair(couplers[j][0].GetInt(), couplers[j][1].GetInt()));
         }
 
-        for (int i = 0; i < mqGates.Size(); i++) {
-          const auto &name = mqGates[i]["name"].GetString();
-          const auto &error = mqGates[i]["gateError"]["value"].GetDouble();
-          backend.multiQubitGates.push_back(name);
-          backend.multiQubitGateErrors.push_back(error);
+        if (b.HasMember("gateSet")) {
+          backend.gateSet = b["gateSet"].GetString();
+          backend.basisGates = b["basisGates"].GetString();
         }
       }
 
-      response = handleExceptionRestClientGet(url, getBackendParametersPath);
-      d.Parse(response);
+      if (!backend.isSimulator && !hub.empty()) {
+        std::string getBackendCalibrationPath, getBackendParametersPath;
+        if (!hub.empty()) {
+          getBackendCalibrationPath =
+              "/api/Network/" + hub + "/devices/" + backend.name +
+              "/calibration?access_token=" + currentApiToken;
+          getBackendParametersPath =
+              "/api/Network/" + hub + "/devices/" + backend.name +
+              "/parameters?access_token=" + currentApiToken;
+        } else {
+          getBackendCalibrationPath =
+              "/api/Backends/" + backend.name +
+              "/calibration?access_token=" + currentApiToken;
+          getBackendParametersPath =
+              "/api/Backends/" + backend.name +
+              "/parameters?access_token=" + currentApiToken;
+        }
 
-      if (d.HasMember("qubits")) {
-        auto qubits = d["qubits"].GetArray();
-        for (int i = 0; i < qubits.Size(); i++) {
-          const auto &t1 = qubits[i]["T1"]["value"].GetDouble();
-          const auto &t2 = qubits[i]["T2"]["value"].GetDouble();
-          const auto &freq = qubits[i]["frequency"]["value"].GetDouble();
-          backend.T1s.push_back(t1);
-          backend.T2s.push_back(t2);
-          backend.frequencies.push_back(freq);
+        auto response =
+            handleExceptionRestClientGet(url, getBackendCalibrationPath);
+        Document d;
+        d.Parse(response);
+
+        if (d.HasMember("qubits") && d.HasMember("multiQubitGates")) {
+          auto qubits = d["qubits"].GetArray();
+          auto mqGates = d["multiQubitGates"].GetArray();
+          for (int i = 0; i < qubits.Size(); i++) {
+            const auto &value = qubits[i]["readoutError"]["value"].GetDouble();
+            const auto &error = qubits[i]["gateError"]["value"].GetDouble();
+            backend.readoutErrors.push_back(value);
+            backend.gateErrors.push_back(error);
+          }
+
+          for (int i = 0; i < mqGates.Size(); i++) {
+            const auto &name = mqGates[i]["name"].GetString();
+            const auto &error = mqGates[i]["gateError"]["value"].GetDouble();
+            backend.multiQubitGates.push_back(name);
+            backend.multiQubitGateErrors.push_back(error);
+          }
+        }
+
+        response = handleExceptionRestClientGet(url, getBackendParametersPath);
+        d.Parse(response);
+
+        if (d.HasMember("qubits")) {
+          auto qubits = d["qubits"].GetArray();
+          for (int i = 0; i < qubits.Size(); i++) {
+            const auto &t1 = qubits[i]["T1"]["value"].GetDouble();
+            const auto &t2 = qubits[i]["T2"]["value"].GetDouble();
+            const auto &freq = qubits[i]["frequency"]["value"].GetDouble();
+            backend.T1s.push_back(t1);
+            backend.T2s.push_back(t2);
+            backend.frequencies.push_back(freq);
+          }
         }
       }
+
+      availableBackends.insert(std::make_pair(backend.name, backend));
     }
 
-    availableBackends.insert(std::make_pair(backend.name, backend));
+    // Set these for RemoteAccelerator.execute
+    postPath = postJobPath + currentApiToken;
+    remoteUrl = url;
+    initialized = true;
   }
-
-  // Set these for RemoteAccelerator.execute
-  postPath = postJobPath + currentApiToken;
-  remoteUrl = url;
 } // namespace quantum
 
 bool IBMAccelerator::isPhysical() {
@@ -424,7 +427,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
     buffer->addExtraInfo(
         "time", ExtraInfo(qasmsArray[0]["result"]["data"]["time"].GetDouble()));
     buffer->addExtraInfo("kernel", ExtraInfo(kernelNames[0]));
-    
+
     if (!chosenBackend.isSimulator) {
       buffer->addExtraInfo("gateSet", chosenBackend.gateSet);
       buffer->addExtraInfo("basisGates", chosenBackend.basisGates);
@@ -436,7 +439,6 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       buffer->addExtraInfo("frequencies", chosenBackend.frequencies);
       buffer->addExtraInfo("T1", chosenBackend.T1s);
       buffer->addExtraInfo("T2", chosenBackend.T2s);
-
     }
 
     measurementSupports.clear();
@@ -457,7 +459,6 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       buffer->addExtraInfo("frequencies", chosenBackend.frequencies);
       buffer->addExtraInfo("T1", chosenBackend.T1s);
       buffer->addExtraInfo("T2", chosenBackend.T2s);
-
     }
 
     for (SizeType i = 0; i < qasmsArray.Size(); i++) {
@@ -470,12 +471,11 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       }
       xacc::info("Measured Qubits: " + sss.str());
 
-      auto tmpBuffer =
-          createBuffer(kernelNames[i], buffer->size());
+      auto tmpBuffer = createBuffer(kernelNames[i], buffer->size());
 
       auto time = qasmsArray[i]["result"]["data"]["time"].GetDouble();
       tmpBuffer->addExtraInfo("time", ExtraInfo(time));
-    //   tmpBuffer->addExtraInfo("kernel", ExtraInfo(kernelNames[i]));
+      //   tmpBuffer->addExtraInfo("kernel", ExtraInfo(kernelNames[i]));
 
       const Value &counts = qasmsArray[i]["result"]["data"]["counts"];
       for (Value::ConstMemberIterator itr = counts.MemberBegin();
