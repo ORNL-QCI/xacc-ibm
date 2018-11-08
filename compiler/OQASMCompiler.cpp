@@ -13,9 +13,9 @@
  *     names of its contributors may be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
@@ -28,74 +28,76 @@
  *   Initial implementation - H. Charles Zhao
  *
  **********************************************************************************/
-#include "XACC.hpp"
 #include "IRProvider.hpp"
+#include "XACC.hpp"
 
 #include "OpenQasmVisitor.hpp"
 
-#include "OQASMCompiler.hpp"
-#include "OQASM2Parser.h"
 #include "OQASM2Lexer.h"
-#include "OQASMToXACCListener.hpp"
+#include "OQASM2Parser.h"
+#include "OQASMCompiler.hpp"
 #include "OQASMErrorListener.hpp"
+#include "OQASMToXACCListener.hpp"
 
 using namespace oqasm;
 using namespace antlr4;
 
 namespace xacc {
 
-    namespace quantum {
+namespace quantum {
 
-        OQASMCompiler::OQASMCompiler() = default;
+OQASMCompiler::OQASMCompiler() = default;
 
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src, std::shared_ptr<Accelerator> acc) {
-            accelerator = acc;
-            return compile(src);
-        }
-
-        std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src) {
-            ANTLRInputStream input(src);
-            OQASM2Lexer lexer(&input);
-            CommonTokenStream tokens(&lexer);
-            OQASM2Parser parser(&tokens);
-            parser.removeErrorListeners();
-            parser.addErrorListener(new OQASMErrorListener());
-
-            auto ir = xacc::getService<IRProvider>("gate")->createIR();
-
-            tree::ParseTree *tree = parser.xaccsrc();
-            OQASMToXACCListener listener(ir);
-            tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-
-            return ir;
-        }
-
-        const std::string OQASMCompiler::translate(const std::string &bufferVariable,
-                                                   std::shared_ptr<xacc::Function> function) {
-            // Get the number of qubits
-            int maxBit = 0;
-            InstructionIterator temp(function);
-            while (temp.hasNext()) {
-                auto nextInst = temp.next();
-                if (nextInst->isEnabled()) {
-                    for (auto& b : nextInst->bits()) {
-                        if (b > maxBit) {
-                            maxBit = b;
-                        }
-                    }
-                }
-            }
-            auto nQubits = maxBit+1;
-            
-            auto visitor = std::make_shared<OpenQasmVisitor>(nQubits);
-            InstructionIterator it(function);
-            while (it.hasNext()) {
-                auto nextInst = it.next();
-                if (nextInst->isEnabled()) {
-                    nextInst->accept(visitor);
-                }
-            }
-            return visitor->getOpenQasmString();
-        }
-    }
+std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src,
+                                           std::shared_ptr<Accelerator> acc) {
+  accelerator = acc;
+  return compile(src);
 }
+
+std::shared_ptr<IR> OQASMCompiler::compile(const std::string &src) {
+  ANTLRInputStream input(src);
+  OQASM2Lexer lexer(&input);
+  CommonTokenStream tokens(&lexer);
+  OQASM2Parser parser(&tokens);
+  parser.removeErrorListeners();
+  parser.addErrorListener(new OQASMErrorListener());
+
+  auto ir = xacc::getService<IRProvider>("gate")->createIR();
+
+  tree::ParseTree *tree = parser.xaccsrc();
+  OQASMToXACCListener listener(ir);
+  tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
+
+  return ir;
+}
+
+const std::string
+OQASMCompiler::translate(const std::string &bufferVariable,
+                         std::shared_ptr<xacc::Function> function) {
+  // Get the number of qubits
+  int maxBit = 0;
+  InstructionIterator temp(function);
+  while (temp.hasNext()) {
+    auto nextInst = temp.next();
+    if (nextInst->isEnabled()) {
+      for (auto &b : nextInst->bits()) {
+        if (b > maxBit) {
+          maxBit = b;
+        }
+      }
+    }
+  }
+  auto nQubits = maxBit + 1;
+
+  auto visitor = std::make_shared<OpenQasmVisitor>(nQubits);
+  InstructionIterator it(function);
+  while (it.hasNext()) {
+    auto nextInst = it.next();
+    if (nextInst->isEnabled()) {
+      nextInst->accept(visitor);
+    }
+  }
+  return visitor->getOpenQasmString();
+}
+} // namespace quantum
+} // namespace xacc

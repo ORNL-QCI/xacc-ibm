@@ -13,9 +13,9 @@
  *     names of its contributors may be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
@@ -31,41 +31,42 @@
 #ifndef XACC_IBM_OQASMTOXACCLISTENER_H
 #define XACC_IBM_OQASMTOXACCLISTENER_H
 
-#include "OQASM2BaseListener.h"
 #include "IR.hpp"
 #include "IRProvider.hpp"
+#include "OQASM2BaseListener.h"
 
 using namespace oqasm;
 
 namespace xacc {
 
-    namespace quantum {
+namespace quantum {
 
-        class OQASMToXACCListener : public OQASM2BaseListener {
-            std::shared_ptr<IR> ir;
-            std::shared_ptr<IRProvider> gateRegistry;
-            std::map<std::string, std::shared_ptr<Function>> functions;
-            std::shared_ptr<Function> curFunc;
-        public:
-            explicit OQASMToXACCListener(std::shared_ptr<IR>);
+class OQASMToXACCListener : public OQASM2BaseListener {
+  std::shared_ptr<IR> ir;
+  std::shared_ptr<IRProvider> gateRegistry;
+  std::map<std::string, std::shared_ptr<Function>> functions;
+  std::shared_ptr<Function> curFunc;
 
-            void enterXacckernel(OQASM2Parser::XacckernelContext *ctx) override;
+public:
+  explicit OQASMToXACCListener(std::shared_ptr<IR>);
 
-            void exitXacckernel(OQASM2Parser::XacckernelContext *ctx) override;
+  void enterXacckernel(OQASM2Parser::XacckernelContext *ctx) override;
 
-            void exitU(OQASM2Parser::UContext *ctx) override;
+  void exitXacckernel(OQASM2Parser::XacckernelContext *ctx) override;
 
-            void exitCX(OQASM2Parser::CXContext *ctx) override;
+  void exitU(OQASM2Parser::UContext *ctx) override;
 
-            void exitUserDefGate(OQASM2Parser::UserDefGateContext *ctx) override;
+  void exitCX(OQASM2Parser::CXContext *ctx) override;
 
-            void exitMeasure(OQASM2Parser::MeasureContext *ctx) override;
+  void exitUserDefGate(OQASM2Parser::UserDefGateContext *ctx) override;
 
-            void exitKernelcall(OQASM2Parser::KernelcallContext *ctx) override;
-        };
+  void exitMeasure(OQASM2Parser::MeasureContext *ctx) override;
 
-    }
+  void exitKernelcall(OQASM2Parser::KernelcallContext *ctx) override;
+};
 
-}
+} // namespace quantum
+
+} // namespace xacc
 
 #endif

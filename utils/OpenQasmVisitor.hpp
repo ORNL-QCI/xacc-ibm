@@ -163,6 +163,16 @@ public:
         operationsJsonStr += js.str();
 	}
 
+    void visit(U &u) {
+        std::stringstream ss, js;
+		auto thetaStr = boost::lexical_cast<std::string>(u.getParameter(0));
+        auto phiStr = boost::lexical_cast<std::string>(u.getParameter(1));
+		auto lambdaStr = boost::lexical_cast<std::string>(u.getParameter(2));
+		ss << "U(" << thetaStr << ", " << phiStr << ", " << lambdaStr << ") q[" << u.bits()[0] << "];\n";
+		OpenQasmStr += ss.str();
+        js << "{\"name\":\"U\",\"params\": [" << thetaStr << ", " << phiStr << ", " << lambdaStr << "],\"qubits\":[" << u.bits()[0]<< "]},";
+        operationsJsonStr += js.str();
+    }
 	int classicalBitCounter = 0;
 	/**
 	 * Visit Measurement gates

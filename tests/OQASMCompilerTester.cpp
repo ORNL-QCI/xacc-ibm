@@ -88,7 +88,7 @@ TEST(OQasmCompilerTester, checkCompileOQASM) {
     auto cnotVisitor = std::make_shared<CountGatesOfTypeVisitor<CNOT>>(function);
     auto xVisitor = std::make_shared<CountGatesOfTypeVisitor<X>>(function);
     auto yVisitor = std::make_shared<CountGatesOfTypeVisitor<Y>>(function);
-    auto uVisitor = std::make_shared<CountGatesOfTypeVisitor<U3>>(function);
+    auto uVisitor = std::make_shared<CountGatesOfTypeVisitor<U>>(function);
     auto rxVisitor = std::make_shared<CountGatesOfTypeVisitor<Rx>>(function);
     auto measureVisitor = std::make_shared<CountGatesOfTypeVisitor<Measure>>(function);
 
