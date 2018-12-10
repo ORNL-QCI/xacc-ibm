@@ -165,9 +165,9 @@ public:
 
     void visit(U &u) {
         std::stringstream ss, js;
-		auto thetaStr = boost::lexical_cast<std::string>(u.getParameter(0));
-        auto phiStr = boost::lexical_cast<std::string>(u.getParameter(1));
-		auto lambdaStr = boost::lexical_cast<std::string>(u.getParameter(2));
+		auto thetaStr = u.getParameter(0).toString();
+        auto phiStr = u.getParameter(1).toString();
+		auto lambdaStr = u.getParameter(2).toString();
 		ss << "U(" << thetaStr << ", " << phiStr << ", " << lambdaStr << ") q[" << u.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
         js << "{\"name\":\"U\",\"params\": [" << thetaStr << ", " << phiStr << ", " << lambdaStr << "],\"qubits\":[" << u.bits()[0]<< "]},";
@@ -211,7 +211,7 @@ public:
 
 	void visit(Rx& rx) {
 		std::stringstream ss, js;
-		auto angleStr = boost::lexical_cast<std::string>(rx.getParameter(0));
+		auto angleStr = rx.getParameter(0).toString();
 		ss << "u3(" << angleStr << ", " << (-pi/2.0) << ", " << (pi/2.0) << ") q[" << rx.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
         js << "{\"name\":\"u3\",\"params\": [" << angleStr << ", " << (-pi/2.0) << ", " << pi/2.0 << "],\"qubits\":[" << rx.bits()[0]<< "]},";
@@ -220,7 +220,7 @@ public:
 
 	void visit(Ry& ry) {
 		std::stringstream ss, js;
-		auto angleStr = boost::lexical_cast<std::string>(ry.getParameter(0));
+		auto angleStr = ry.getParameter(0).toString();
 		ss << "u3(" << angleStr << ", 0, 0) q[" << ry.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
         js << "{\"name\":\"u3\",\"params\": [" << angleStr << ", " << 0 << ", " << 0 << "],\"qubits\":[" << ry.bits()[0]<< "]},";
@@ -229,7 +229,7 @@ public:
 
 	void visit(Rz& rz) {
 		std::stringstream ss, js;
-		auto angleStr = boost::lexical_cast<std::string>(rz.getParameter(0));
+		auto angleStr = rz.getParameter(0).toString();
 		ss << "u1(" << angleStr << ") q[" << rz.bits()[0] << "];\n";
 		OpenQasmStr += ss.str();
         js << "{\"name\":\"u1\",\"params\": [" << angleStr << "],\"qubits\":[" << rz.bits()[0]<< "]},";
