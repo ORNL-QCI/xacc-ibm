@@ -273,7 +273,17 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
   std::string shots = "1024";
   std::map<std::string, std::string> headers;
 
-  backendName = chosenBackend.name;
+    if (xacc::optionExists("ibm-backend")) {
+      auto newBackend = xacc::getOption("ibm-backend");
+      if (availableBackends.find(newBackend) == availableBackends.end()) {
+        xacc::error("Invalid IBM Backend string");
+      }
+      if (!availableBackends[newBackend].status) {
+        xacc::error(newBackend + " is currently unavailable, status = off");
+      }
+
+      chosenBackend = availableBackends[newBackend];
+    }
 
   if (xacc::optionExists("ibm-shots")) {
     shots = xacc::getOption("ibm-shots");
