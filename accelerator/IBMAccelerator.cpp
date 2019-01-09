@@ -282,6 +282,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
         xacc::error(newBackend + " is currently unavailable, status = off");
       }
 
+      backendName = newBackend;
       chosenBackend = availableBackends[newBackend];
     }
 
@@ -321,7 +322,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
         "4.990894220665049,4.806558974441183,4.956319934060655,4."
         "599367389589547,4.827896792802955,4.938182460530852";
     initStr =
-        "{\"qobj_id\": \"xacc-qobj\", \"schema_version\": \"1.0.0\", \"type\": "
+        "{ \"qObject\": {\"qobj_id\": \"xacc-qobj\", \"schema_version\": \"1.0.0\", \"type\": "
         "\"PULSE\", \"header\": { \"description\": \"\", \"backend_name\": \"" +
         backendName + "\" }, \"config\": { \"meas_lo_freq\": [" + measlofreq +
         "], \"qubit_lo_freq\": [" + qubitlofreq +
@@ -392,7 +393,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
       initStr += ss.str() + "},";
     }
     jsonStr = initStr.substr(0, initStr.length() - 1) +
-              jsonStr.substr(0, jsonStr.length() - 1) + "]}";
+              jsonStr.substr(0, jsonStr.length() - 1) + "]}, \"backend\": {\"name\": \""+backendName+"\"}}";
 
   } else {
     jsonStr = jsonStr.substr(0, jsonStr.size() - 1) + "]";
