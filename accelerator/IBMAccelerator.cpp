@@ -229,8 +229,21 @@ void IBMAccelerator::initialize() {
     postPath = postJobPath + currentApiToken;
     remoteUrl = url;
     initialized = true;
+
+    std::string backendName = "ibmq_qasm_simulator";
+    if (xacc::optionExists("ibm-backend")) {
+      auto newBackend = xacc::getOption("ibm-backend");
+      if (availableBackends.find(newBackend) == availableBackends.end()) {
+        xacc::error("Invalid IBM Backend string");
+      }
+      if (!availableBackends[newBackend].status) {
+        xacc::error(newBackend + " is currently unavailable, status = off");
+      }
+
+      chosenBackend = availableBackends[newBackend];
+    }
   }
-} // namespace quantum
+}
 
 bool IBMAccelerator::isPhysical() {
   std::string backendName = "ibmq_qasm_simulator";
@@ -260,18 +273,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
   std::string shots = "1024";
   std::map<std::string, std::string> headers;
 
-  if (xacc::optionExists("ibm-backend")) {
-    auto newBackend = xacc::getOption("ibm-backend");
-    if (availableBackends.find(newBackend) == availableBackends.end()) {
-      xacc::error("Invalid IBM Backend string");
-    }
-    if (!availableBackends[newBackend].status) {
-      xacc::error(newBackend + " is currently unavailable, status = off");
-    }
-
-    backendName = newBackend;
-    chosenBackend = availableBackends[backendName];
-  }
+  backendName = chosenBackend.name;
 
   if (xacc::optionExists("ibm-shots")) {
     shots = xacc::getOption("ibm-shots");
@@ -281,7 +283,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
   bool isAnalog = false;
   for (auto &kernel : functions) {
     if (kernel->isAnalog()) {
-        std::cout << "We have an analog circuit.\n";
+      std::cout << "We have an analog circuit.\n";
       isAnalog = true;
       nAnalogs++;
     }
@@ -295,25 +297,43 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
 
   std::string jsonStr = "", initStr = "";
   if (isAnalog) {
-     auto measlofreq = "7.02304866,6.988508651,7.021087557,6.914462388,7.085532103,6.949279909,7.108946695,6.909172065,6.994924756,6.901232112,7.046906055,7.002697717,7.056662542, 6.944036858,7.102260098,6.942593417,7.087802113,6.89580952,7.003100376,6.89580523";
-     auto qubitlofreq = "4.920222867865243,4.832046403202443,4.940398096698374,4.514466758212148,4.662970579288438,4.957220580605086,4.995704948314061,4.811225865860375,5.0124078826037755,5.0564924363956045,4.72033587911043,4.899360137518408,4.772030460533516,5.110023809671274,4.990894220665049,4.806558974441183,4.956319934060655,4.599367389589547,4.827896792802955,4.938182460530852";  
-     initStr = "{\"qobj_id\": \"xacc-qobj\", \"schema_version\": \"1.0.0\", \"type\": \"PULSE\", \"header\": { \"description\": \"\", \"backend_name\": \""+backendName+"\" }, \"config\": { \"meas_lo_freq\": ["+measlofreq+"], \"qubit_lo_freq\": ["+qubitlofreq+"], \"rep_time\": 500, \"meas_level\": 1, \"shots\":"+shots+", \"meas_return\": \"avg\", \"memory_slot_size\": 1, \"seed\": 1, \"pulse_library\": [";
-     // add pulse library
-     
-     jsonStr += "] }, \"experiments\": ["; 
+    auto measlofreq =
+        "7.02304866,6.988508651,7.021087557,6.914462388,7.085532103,6."
+        "949279909,7.108946695,6.909172065,6.994924756,6.901232112,7.046906055,"
+        "7.002697717,7.056662542, "
+        "6.944036858,7.102260098,6.942593417,7.087802113,6.89580952,7."
+        "003100376,6.89580523";
+    auto qubitlofreq =
+        "4.920222867865243,4.832046403202443,4.940398096698374,4."
+        "514466758212148,4.662970579288438,4.957220580605086,4.995704948314061,"
+        "4.811225865860375,5.0124078826037755,5.0564924363956045,4."
+        "72033587911043,4.899360137518408,4.772030460533516,5.110023809671274,"
+        "4.990894220665049,4.806558974441183,4.956319934060655,4."
+        "599367389589547,4.827896792802955,4.938182460530852";
+    initStr =
+        "{\"qobj_id\": \"xacc-qobj\", \"schema_version\": \"1.0.0\", \"type\": "
+        "\"PULSE\", \"header\": { \"description\": \"\", \"backend_name\": \"" +
+        backendName + "\" }, \"config\": { \"meas_lo_freq\": [" + measlofreq +
+        "], \"qubit_lo_freq\": [" + qubitlofreq +
+        "], \"rep_time\": 500, \"meas_level\": 1, \"shots\":" + shots +
+        ", \"meas_return\": \"avg\", \"memory_slot_size\": 1, \"seed\": 1, "
+        "\"pulse_library\": [";
+    // add pulse library
+
+    jsonStr += "] }, \"experiments\": [";
   } else {
-      jsonStr = "{\"qasms\": ["; 
+    jsonStr = "{\"qasms\": [";
   }
-  
+
   int kernelCounter = 0;
   for (auto &kernel : functions) {
     // Create the Instruction Visitor that is going
     // to map our IR to Quil.
     std::shared_ptr<BaseInstructionVisitor> visitor;
     if (!isAnalog) {
-        visitor = std::make_shared<OpenQasmVisitor>(buffer->size());
+      visitor = std::make_shared<OpenQasmVisitor>(buffer->size());
     } else {
-        visitor = std::make_shared<OpenPulseVisitor>(kernel->name());
+      visitor = std::make_shared<OpenPulseVisitor>(kernel->name());
     }
 
     // Our QIR is really a tree structure
@@ -337,7 +357,8 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
 
     if (isAnalog) {
       // build up experiments {} json
-      auto expStr = std::dynamic_pointer_cast<OpenPulseVisitor>(visitor)->getOpenPulseInstructionsJson();
+      auto expStr = std::dynamic_pointer_cast<OpenPulseVisitor>(visitor)
+                        ->getOpenPulseInstructionsJson();
       jsonStr += expStr + ",";
     } else {
       auto qasmStr = visitor->getNativeAssembly();
@@ -354,13 +375,14 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
     // Add everything from the pulseLibrary
     // FIXME PULSE LIBRARY CACHE AS OPTION, DEFAULT to QCOR
     auto cache = xacc::getCache("qcor_pulse_library.json");
-    for (auto& kv: cache) {    
-        std::stringstream ss;
-        initStr += "{\"name\": \""+ kv.first +"\", \"samples\": ";
-        ss << kv.second.toString();
-        initStr += ss.str() + "},";
+    for (auto &kv : cache) {
+      std::stringstream ss;
+      initStr += "{\"name\": \"" + kv.first + "\", \"samples\": ";
+      ss << kv.second.toString();
+      initStr += ss.str() + "},";
     }
-    jsonStr = initStr.substr(0,initStr.length()-1) + jsonStr.substr(0,jsonStr.length()-1) + "]}";
+    jsonStr = initStr.substr(0, initStr.length() - 1) +
+              jsonStr.substr(0, jsonStr.length() - 1) + "]}";
 
   } else {
     jsonStr = jsonStr.substr(0, jsonStr.size() - 1) + "]";

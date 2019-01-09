@@ -197,6 +197,24 @@ public:
     return false;
   }
 
+  const std::vector<double> getOneBitErrorRates() override {
+    return chosenBackend.gateErrors;
+  }
+  
+  const std::vector<std::pair<std::pair<int, int>, double>>
+  getTwoBitErrorRates() override {
+    // Return list of ((q1,q2),ERROR_RATE)
+    std::vector<std::pair<std::pair<int, int>, double>> twobiter;
+    for (int i = 0; i < chosenBackend.multiQubitGates.size(); i++) {
+        auto mqg = chosenBackend.multiQubitGates[i];
+        boost::replace_all(mqg, "CX", "");
+        std::vector<std::string> split;
+        boost::split(split, mqg, boost::is_any_of("_"));
+        twobiter.push_back({{std::stoi(split[0]), std::stoi(split[1])}, chosenBackend.multiQubitGateErrors[i]});
+    }
+    
+    return twobiter;
+  }
   /**
    * Return the name of this instance.
    *
