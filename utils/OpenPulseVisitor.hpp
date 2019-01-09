@@ -1,5 +1,9 @@
 /***********************************************************************************
+<<<<<<< HEAD
  * Copyright (c) 2018, UT-Battelle
+=======
+ * Copyright (c) 2017, UT-Battelle
+>>>>>>> a6245fd4f1404be93f9b04ddf420d5736d842c66
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,11 +43,6 @@ namespace xacc {
 namespace quantum {
 
 /**
- * The OpenQasmVisitor is an InstructionVisitor that visits
- * quantum gate instructions and creates an equivalent
- * OpenQasm string that can be executed by the Rigetti
- * superconducting quantum computer.
- *
  */
 class OpenPulseVisitor: public AllGateVisitor {
 protected:
