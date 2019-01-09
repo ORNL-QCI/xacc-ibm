@@ -32,7 +32,6 @@
 #include "XACC.hpp"
 #include "CountGatesOfTypeVisitor.hpp"
 #include "AllGateVisitor.hpp"
-#include "U3.hpp"
 
 using namespace xacc;
 
@@ -49,10 +48,10 @@ TEST(OQasmCompilerTester, checkCompileOQASM) {
         "   // optional post-rotation for state tomography\n"
         //"gate post q { }\n"
         "   U(0.3,0.2,0.1) q[0];\n"
-        "   u3(3.14,0.2,0) q[1];\n"
-        "   u3(pi/2,n,n/2.3) q[1];\n"
-        "   u3(pi/2,n,0.1/3) q[2];\n"
-        "   u3(2*pi/3,n,0/2) q[1];\n"
+        "   U(3.14,0.2,0) q[1];\n"
+        "   U(pi/2,n,n/2.3) q[1];\n"
+        "   U(pi/2,n,0.1/3) q[2];\n"
+        "   U(2*pi/3,n,0/2) q[1];\n"
         "   h q[1];\n"
         "   x q[0];\n"
         "   y q[2];\n"

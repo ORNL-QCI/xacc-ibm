@@ -29,7 +29,6 @@
  *
  **********************************************************************************/
 #include "OQASMCompiler.hpp"
-#include "U3.hpp"
 
 #include "cppmicroservices/BundleActivator.h"
 #include "cppmicroservices/BundleContext.h"
@@ -55,9 +54,6 @@ public:
     auto c = std::make_shared<xacc::quantum::OQASMCompiler>();
     context.RegisterService<xacc::Compiler>(c);
     context.RegisterService<xacc::OptionsProvider>(c);
-
-    // auto u3 = std::make_shared<xacc::quantum::U3>();
-    // context.RegisterService<xacc::quantum::GateInstruction>(u3);
   }
 
   /**

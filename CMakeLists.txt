@@ -12,10 +12,6 @@ if (FROM_SETUP_PY AND NOT APPLE)
    set (CMAKE_SHARED_LINKER_FLAGS "-static-libstdc++" CACHE INTERNAL "" FORCE)
 endif()
 
-# Make sure all build libraries have reference to their dependents
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
 find_package(XACC REQUIRED)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -31,16 +27,14 @@ include(CppMicroServicesConfig)
 configure_file("${CMAKE_SOURCE_DIR}/cmake/xacc-ibm-config.hpp.in" "${CMAKE_BINARY_DIR}/xacc-ibm-config.hpp")
 
 include_directories(${CMAKE_BINARY_DIR})
-
 include_directories(${XACC_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/utils)
 
 link_directories(${XACC_LIBRARY_DIR})
 
-if(${XACC_HAS_ANTLR})
-   add_subdirectory(compiler)
-endif()
+add_subdirectory(compiler)
 add_subdirectory(accelerator)
+
 if(PYTHON_INCLUDE_DIR)
    add_subdirectory(python)
 endif()

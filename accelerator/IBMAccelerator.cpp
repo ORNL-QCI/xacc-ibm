@@ -14,21 +14,22 @@
  *     derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- *AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY DIRECT,
+ *INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ *OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Contributors:
  *   Initial API and implementation - Alex McCaskey
  *
  **********************************************************************************/
 #include "IBMAccelerator.hpp"
+#include "OpenPulseVisitor.hpp"
 
 #include "XACC.hpp"
 
@@ -256,7 +257,6 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
   // some basic variables we are going to need
   auto options = RuntimeOptions::instance();
   std::string backendName = "ibmq_qasm_simulator";
-  std::string jsonStr = "{\"qasms\": [";
   std::string shots = "1024";
   std::map<std::string, std::string> headers;
 
@@ -277,11 +277,44 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
     shots = xacc::getOption("ibm-shots");
   }
 
+  int nAnalogs = 0;
+  bool isAnalog = false;
+  for (auto &kernel : functions) {
+    if (kernel->isAnalog()) {
+        std::cout << "We have an analog circuit.\n";
+      isAnalog = true;
+      nAnalogs++;
+    }
+  }
+
+  if (nAnalogs > 0 && nAnalogs != functions.size()) {
+    xacc::error("Cannot mix OpenQasm and OpenPulse executions. You have " +
+                std::to_string(functions.size()) + " functions but " +
+                std::to_string(nAnalogs) + " analog functions.");
+  }
+
+  std::string jsonStr = "", initStr = "";
+  if (isAnalog) {
+     auto measlofreq = "7.02304866,6.988508651,7.021087557,6.914462388,7.085532103,6.949279909,7.108946695,6.909172065,6.994924756,6.901232112,7.046906055,7.002697717,7.056662542, 6.944036858,7.102260098,6.942593417,7.087802113,6.89580952,7.003100376,6.89580523";
+     auto qubitlofreq = "4.920222867865243,4.832046403202443,4.940398096698374,4.514466758212148,4.662970579288438,4.957220580605086,4.995704948314061,4.811225865860375,5.0124078826037755,5.0564924363956045,4.72033587911043,4.899360137518408,4.772030460533516,5.110023809671274,4.990894220665049,4.806558974441183,4.956319934060655,4.599367389589547,4.827896792802955,4.938182460530852";  
+     initStr = "{\"qobj_id\": \"xacc-qobj\", \"schema_version\": \"1.0.0\", \"type\": \"PULSE\", \"header\": { \"description\": \"\", \"backend_name\": \""+backendName+"\" }, \"config\": { \"meas_lo_freq\": ["+measlofreq+"], \"qubit_lo_freq\": ["+qubitlofreq+"], \"rep_time\": 500, \"meas_level\": 1, \"shots\":"+shots+", \"meas_return\": \"avg\", \"memory_slot_size\": 1, \"seed\": 1, \"pulse_library\": [";
+     // add pulse library
+     
+     jsonStr += "] }, \"experiments\": ["; 
+  } else {
+      jsonStr = "{\"qasms\": ["; 
+  }
+  
   int kernelCounter = 0;
-  for (auto kernel : functions) {
+  for (auto &kernel : functions) {
     // Create the Instruction Visitor that is going
     // to map our IR to Quil.
-    auto visitor = std::make_shared<OpenQasmVisitor>(buffer->size());
+    std::shared_ptr<BaseInstructionVisitor> visitor;
+    if (!isAnalog) {
+        visitor = std::make_shared<OpenQasmVisitor>(buffer->size());
+    } else {
+        visitor = std::make_shared<OpenPulseVisitor>(kernel->name());
+    }
 
     // Our QIR is really a tree structure
     // so create a pre-order tree traversal
@@ -289,6 +322,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
     InstructionIterator it(kernel);
     measurementSupports.insert(
         std::make_pair(kernelCounter, std::vector<int>{}));
+
     while (it.hasNext()) {
       // Get the next node in the tree
       auto nextInst = it.next();
@@ -301,21 +335,40 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
       }
     }
 
-    auto qasmStr = visitor->getOpenQasmString();
-    boost::replace_all(qasmStr, "\n", "\\n");
-
-    jsonStr += "{\"qasm\": \"" + qasmStr + "\"},";
-
+    if (isAnalog) {
+      // build up experiments {} json
+      auto expStr = std::dynamic_pointer_cast<OpenPulseVisitor>(visitor)->getOpenPulseInstructionsJson();
+      jsonStr += expStr + ",";
+    } else {
+      auto qasmStr = visitor->getNativeAssembly();
+      boost::replace_all(qasmStr, "\n", "\\n");
+      jsonStr += "{\"qasm\": \"" + qasmStr + "\"},";
+    }
     kernelNames.push_back(kernel->name());
     kernelCounter++;
   }
 
-  jsonStr = jsonStr.substr(0, jsonStr.size() - 1) + "]";
-  jsonStr += ", \"shots\": " + shots +
-             ", \"maxCredits\": 5, "
-             "\"backend\": {\"name\": \"" +
-             backendName + "\"}}";
+  if (isAnalog) {
 
+    // Fill out the rest of the jsonStr for OpenPulse
+    // Add everything from the pulseLibrary
+    // FIXME PULSE LIBRARY CACHE AS OPTION, DEFAULT to QCOR
+    auto cache = xacc::getCache("qcor_pulse_library.json");
+    for (auto& kv: cache) {    
+        std::stringstream ss;
+        initStr += "{\"name\": \""+ kv.first +"\", \"samples\": ";
+        ss << kv.second.toString();
+        initStr += ss.str() + "},";
+    }
+    jsonStr = initStr.substr(0,initStr.length()-1) + jsonStr.substr(0,jsonStr.length()-1) + "]}";
+
+  } else {
+    jsonStr = jsonStr.substr(0, jsonStr.size() - 1) + "]";
+    jsonStr += ", \"shots\": " + shots +
+               ", \"maxCredits\": 5, "
+               "\"backend\": {\"name\": \"" +
+               backendName + "\"}}";
+  }
   // Check that the qpu is online
   if (backendName != "ibmq_qasm_simulator") {
     std::string checkBackend = "/api/Backends/" + backendName;
