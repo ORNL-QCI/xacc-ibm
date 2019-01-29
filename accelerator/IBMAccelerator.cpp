@@ -294,7 +294,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
   bool isAnalog = false;
   for (auto &kernel : functions) {
     if (kernel->isAnalog()) {
-      std::cout << "We have an analog circuit.\n";
+      xacc::info("We have an analog circuit.");
       isAnalog = true;
       nAnalogs++;
     }
@@ -443,9 +443,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
 
   std::string getPath =
       "/api/Jobs/" + jobId + "?access_token=" + currentApiToken;
-  if (!hub.empty()) {
-    // getPath =
-  }
+ 
   std::string getResponse = handleExceptionRestClientGet(url, getPath);
 
   // Loop until the job is complete,
@@ -461,6 +459,11 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       jobCompleted = true;
     }
 
+    if (boost::contains(getResponse, "ERROR_RUNNING_JOB")) {
+        xacc::info(getResponse);
+        xacc::error("Error encountered running IBM job.");
+    }
+    
     Document d;
     d.Parse(getResponse);
     if (d.HasMember("infoQueue")) {
@@ -485,6 +488,8 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
   xacc::info(getResponse);
   d.Parse(getResponse);
 
+  xacc::info(getResponse);
+  
   auto qasmsArray = d["qasms"].GetArray();
   if (qasmsArray.Size() == 1) {
     const Value &counts = qasmsArray[0]["result"]["data"]["counts"];
