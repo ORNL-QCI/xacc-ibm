@@ -52,51 +52,46 @@ namespace quantum {
 class LocalIBMAccelerator : public Accelerator {
 public:
   std::shared_ptr<AcceleratorBuffer> createBuffer(const std::string &varId,
-                                                  const int size);
+                                                  const int size) override;
 
-  virtual std::shared_ptr<AcceleratorBuffer>
-  createBuffer(const std::string &varId);
+  std::shared_ptr<AcceleratorBuffer>
+  createBuffer(const std::string &varId) override;
 
-  virtual bool isValidBufferSize(const int NBits);
+  bool isValidBufferSize(const int NBits) override;
 
-  virtual AcceleratorType getType() { return AcceleratorType::qpu_gate; }
+  AcceleratorType getType() override { return AcceleratorType::qpu_gate; }
 
   void initialize() override { return; }
 
-  virtual void execute(std::shared_ptr<AcceleratorBuffer> buffer,
-                       const std::shared_ptr<xacc::Function> kernel);
+  void execute(std::shared_ptr<AcceleratorBuffer> buffer,
+                       const std::shared_ptr<xacc::Function> kernel) override;
 
-  virtual std::vector<std::shared_ptr<AcceleratorBuffer>>
+  std::vector<std::shared_ptr<AcceleratorBuffer>>
   execute(std::shared_ptr<AcceleratorBuffer> buffer,
-          const std::vector<std::shared_ptr<Function>> functions);
+          const std::vector<std::shared_ptr<Function>> functions) override;
 
-  virtual std::vector<std::shared_ptr<IRTransformation>> getIRTransformations();
+  std::vector<std::shared_ptr<IRTransformation>> getIRTransformations() override;
 
-  virtual std::shared_ptr<options_description> getOptions() {
-    auto desc =
-        std::make_shared<options_description>("Local IBM Simulator Options");
-    desc->add_options()("local-ibm-ro-error", value<std::string>(),
-                        "Provide the p(1|0), p(0|1).")
-                        ("u-p-depol",value<std::string>(), "")
-                        ("cx-p-depol", value<std::string>(), "");
-                        // ("cx-u-error", value<std::string>(), "");
+  OptionPairs getOptions() override {
+    OptionPairs desc {{"local-ibm-ro-error",
+                        "Provide the p(1|0), p(0|1)."},{
+                        "u-p-depol", ""},{
+                        "cx-p-depol", ""}};
     return desc;
   }
-
-  virtual bool handleOptions(variables_map &map) { return false; }
 
   /**
    * Return the name of this instance.
    *
    * @return name The string name
    */
-  virtual const std::string name() const { return "local-ibm"; }
+  const std::string name() const override { return "local-ibm"; }
 
   /**
    * Return the description of this instance
    * @return description The description of this object.
    */
-  virtual const std::string description() const { return ""; }
+  const std::string description() const override { return ""; }
 
   LocalIBMAccelerator() : Accelerator() {}
 

@@ -119,7 +119,9 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
     auto qasmStr = visitor->getOpenQasmString();
     auto opsStr = visitor->getOperationsJsonString();
 
-    boost::replace_all(qasmStr, "\n", "\\n");
+    qasmStr = std::regex_replace(qasmStr, std::regex("\n"), "\\n") ;
+
+    // boost::replace_all(qasmStr, "\n", "\\n");
 
     h["clbit_labels"].push_back(
         {"c", measurementSupports[kernelCounter].size()});
@@ -158,7 +160,8 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
   if (xacc::optionExists("local-ibm-ro-error")) {
     auto probStr = xacc::getOption("local-ibm-ro-error");
     std::vector<std::string> split;
-    boost::split(split, probStr, boost::is_any_of(","));
+    split = xacc::split(probStr, ',');
+    // boost::split(split, probStr, boost::is_any_of(","));
     config2["noise_params"]["readout_error"] = {std::stod(split[0])};
     for (int i = 1; i < split.size(); i++) {
       config2["noise_params"]["readout_error"].push_back(std::stod(split[i]));
@@ -179,10 +182,10 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
 //       auto cx_uerror_str = xacc::getOption("cx-u-error");
 //       for (int i = 0; i < cx_uerror_str.size(); i++) {
 
-          
-          
+
+
 //       }
-      
+
 //     //   config2["noise_params"]["CX"]["U_error"] = cx_uerror;
 //   }
   j["config"] = config2;
@@ -209,7 +212,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
   json results = json::parse(response)["result"];
 
 //   std::cout << "HELLO RESULTS: " << response << "\n\n"
-//             << results.dump(4) << "\n";
+            // << results.dump(4) << "\n";
   // N Measurements
   kernelCounter = 0;
   for (auto &result : results) {
@@ -223,7 +226,7 @@ std::vector<std::shared_ptr<AcceleratorBuffer>> LocalIBMAccelerator::execute(
       auto bitString = it.key();
 
       if (bitString.length() < buffer->size()) {
-          
+
           std::string s = "";
           for (int i = 0; i < buffer->size(); i++) s += "0";
 

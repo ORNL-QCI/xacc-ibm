@@ -33,6 +33,8 @@
 
 #include "XACC.hpp"
 
+#include <thread>
+
 namespace xacc {
 namespace quantum {
 
@@ -443,7 +445,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
 
   std::string getPath =
       "/api/Jobs/" + jobId + "?access_token=" + currentApiToken;
- 
+
   std::string getResponse = handleExceptionRestClientGet(url, getPath);
 
   // Loop until the job is complete,
@@ -463,7 +465,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
         xacc::info(getResponse);
         xacc::error("Error encountered running IBM job.");
     }
-    
+
     Document d;
     d.Parse(getResponse);
     if (d.HasMember("infoQueue")) {
@@ -489,7 +491,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
   d.Parse(getResponse);
 
   xacc::info(getResponse);
-  
+
   auto qasmsArray = d["qasms"].GetArray();
   if (qasmsArray.Size() == 1) {
     const Value &counts = qasmsArray[0]["result"]["data"]["counts"];
@@ -506,13 +508,13 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
         bitStr =
             bitStr.substr(bitStr.length() - buffer->size(), bitStr.length());
       }
-      boost::dynamic_bitset<> outcome(bitStr);
+    //   boost::dynamic_bitset<> outcome(bitStr);
       std::stringstream xx;
-      xx << outcome << " " << nOccurrences << " times";
+      xx << bitStr << " " << nOccurrences << " times";
       xacc::info("IBM Measurement outcome: " + xx.str() + ".");
-      for (int i = 0; i < nOccurrences; i++) {
-        buffer->appendMeasurement(outcome);
-      }
+    //   for (int i = 0; i < nOccurrences; i++) {
+      buffer->appendMeasurement(bitStr,nOccurrences);
+    //   }
     }
 
     buffer->addExtraInfo(
@@ -625,10 +627,10 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
         xacc::info("Our Results: " + std::string(bitStr) + ":" +
                    std::to_string(itr->value.GetInt()));
 
-        boost::dynamic_bitset<> outcome(bitStr);
-        for (int i = 0; i < nOccurrences; i++) {
-          tmpBuffer->appendMeasurement(outcome);
-        }
+        // boost::dynamic_bitset<> outcome(bitStr);
+        // for (int i = 0; i < nOccurrences; i++) {
+          tmpBuffer->appendMeasurement(bitStr,nOccurrences);
+        // }
       }
 
       xacc::info("--------------------------");
@@ -641,7 +643,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
   }
 }
 
-std::shared_ptr<AcceleratorGraph> IBMAccelerator::getAcceleratorConnectivity() {
+std::vector<std::pair<int,int>> IBMAccelerator::getAcceleratorConnectivity() {
   std::string backendName = "ibmq_qasm_simulator";
 
   if (xacc::optionExists("ibm-backend")) {
@@ -653,17 +655,19 @@ std::shared_ptr<AcceleratorGraph> IBMAccelerator::getAcceleratorConnectivity() {
   }
 
   auto backend = availableBackends[backendName];
-  auto graph = std::make_shared<AcceleratorGraph>(backend.nQubits);
-
+//   auto graph = std::make_shared<AcceleratorGraph>(backend.nQubits);
+  std::vector<std::pair<int,int>> graph;
   if (!backend.couplers.empty()) {
     for (auto es : backend.couplers) {
-      graph->addEdge(es.first, es.second);
+    //   graph->addEdge(es.first, es.second);
+      graph.push_back({es.first,es.second});
     }
   } else {
     for (int i = 0; i < backend.nQubits; i++) {
       for (int j = 0; j < backend.nQubits; j++) {
         if (i < j) {
-          graph->addEdge(i, j);
+        //   graph->addEdge(i, j);
+          graph.push_back({i,j});
         }
       }
     }

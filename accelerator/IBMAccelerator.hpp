@@ -93,7 +93,7 @@ public:
    * @return
    */
   std::shared_ptr<AcceleratorBuffer> createBuffer(const std::string &varId,
-                                                  const int size);
+                                                  const int size) override;
 
   /**
    * Create, store, and return an AcceleratorBuffer with the given
@@ -104,8 +104,8 @@ public:
    * @param varId The variable name of the created buffer
    * @return buffer The buffer instance created.
    */
-  virtual std::shared_ptr<AcceleratorBuffer>
-  createBuffer(const std::string &varId);
+  std::shared_ptr<AcceleratorBuffer>
+  createBuffer(const std::string &varId) override;
   /**
    * Initialize this Accelerator. This method is called
    * by the XACC framework after an Accelerator has been
@@ -113,14 +113,14 @@ public:
    * done before execution here.
    *
    */
-  virtual void initialize();
+  void initialize() override;
 
   /**
    * Return the graph structure for this Accelerator.
    *
    * @return connectivityGraph The graph structure of this Accelerator
    */
-  virtual std::shared_ptr<AcceleratorGraph> getAcceleratorConnectivity();
+   std::vector<std::pair<int,int>> getAcceleratorConnectivity() override;
 
   /**
    * Return true if this Accelerator can allocated
@@ -128,41 +128,39 @@ public:
    * @param NBits
    * @return
    */
-  virtual bool isValidBufferSize(const int NBits);
+  bool isValidBufferSize(const int NBits) override;
 
   /**
    * This Accelerator models QPU Gate accelerators.
    * @return
    */
-  virtual AcceleratorType getType() { return AcceleratorType::qpu_gate; }
+  AcceleratorType getType() override { return AcceleratorType::qpu_gate; }
 
   /**
    * We have no need to transform the IR for this Accelerator,
    * so return an empty list, for now.
    * @return
    */
-  virtual std::vector<std::shared_ptr<IRTransformation>> getIRTransformations();
+  std::vector<std::shared_ptr<IRTransformation>> getIRTransformations() override;
 
   /**
    * Return all relevant IBMAccelerator runtime options.
    * Users can set the api-key, execution type, and number of triels
    * from the command line with these options.
    */
-  virtual std::shared_ptr<options_description> getOptions() {
-    auto desc =
-        std::make_shared<options_description>("IBM Accelerator Options");
-    desc->add_options()("ibm-api-key", value<std::string>(),
+   OptionPairs getOptions() override {
+    OptionPairs desc {{"ibm-api-key",
                         "Provide the IBM API key. This is used if "
-                        "$HOME/.ibm_config is not found")(
+                        "$HOME/.ibm_config is not found"},{
         "ibm-api-url",
         "Specify the IBM Quantum Experience URL, overrides $HOME/.ibm_config "
-        ".")("ibm-backend", value<std::string>(), "Provide the backend name.")(
-        "ibm-shots", value<std::string>(),
-        "Provide the number of shots to execute.")(
+        "."},{"ibm-backend",  "Provide the backend name."},{
+        "ibm-shots",
+        "Provide the number of shots to execute."},{
         "ibm-list-backends",
-        "List the available backends at the IBM Quantum Experience URL.")(
-        "ibm-print-queue", value<std::string>(),
-        "Print the status of the queue for the given backend");
+        "List the available backends at the IBM Quantum Experience URL."},{
+        "ibm-print-queue",
+        "Print the status of the queue for the given backend"}};
     return desc;
   }
 
@@ -174,7 +172,7 @@ public:
    * @param map The mapping of options to values
    * @return exit True if exit, false otherwise
    */
-  virtual bool handleOptions(variables_map &map) {
+   bool handleOptions(const std::map<std::string, std::string> &map) override {
     if (map.count("ibm-list-backends")) {
       initialize();
       XACCLogger::instance()->enqueueLog("");
@@ -186,7 +184,7 @@ public:
       return true;
     } else if (map.count("ibm-print-queue")) {
       initialize();
-      auto backend = map["ibm-print-queue"].as<std::string>();
+      auto backend = map.at("ibm-print-queue");
       XACCLogger::instance()->enqueueLog("");
       XACCLogger::instance()->enqueueLog(
           "Queue Status for " + backend + ": " +
@@ -200,7 +198,7 @@ public:
   const std::vector<double> getOneBitErrorRates() override {
     return chosenBackend.gateErrors;
   }
-  
+
   const std::vector<std::pair<std::pair<int, int>, double>>
   getTwoBitErrorRates() override {
     // Return list of ((q1,q2),ERROR_RATE)
@@ -212,7 +210,7 @@ public:
         boost::split(split, mqg, boost::is_any_of("_"));
         twobiter.push_back({{std::stoi(split[0]), std::stoi(split[1])}, chosenBackend.multiQubitGateErrors[i]});
     }
-    
+
     return twobiter;
   }
   /**
@@ -220,13 +218,13 @@ public:
    *
    * @return name The string name
    */
-  virtual const std::string name() const { return "ibm"; }
+  const std::string name() const override { return "ibm"; }
 
   /**
    * Return the description of this instance
    * @return description The description of this object.
    */
-  virtual const std::string description() const {
+  const std::string description() const override {
     return "The IBM Accelerator interacts with the remote IBM "
            "Quantum Experience to launch XACC quantum kernels.";
   }
@@ -234,16 +232,16 @@ public:
   /**
    * take ir, generate json post string
    */
-  virtual const std::string
+  const std::string
   processInput(std::shared_ptr<AcceleratorBuffer> buffer,
-               std::vector<std::shared_ptr<Function>> functions);
+               std::vector<std::shared_ptr<Function>> functions) override;
 
   /**
    * take response and create
    */
-  virtual std::vector<std::shared_ptr<AcceleratorBuffer>>
+  std::vector<std::shared_ptr<AcceleratorBuffer>>
   processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
-                  const std::string &response);
+                  const std::string &response) override;
 
   IBMAccelerator() : RemoteAccelerator() {}
 
