@@ -33,16 +33,7 @@
 
 #include "IBMIRTransformation.hpp"
 #include "InstructionIterator.hpp"
-#include "OpenQasmVisitor.hpp"
 #include "RemoteAccelerator.hpp"
-#include "RuntimeOptions.hpp"
-
-#define RAPIDJSON_HAS_STDSTRING 1
-
-#include "rapidjson/document.h"
-#include "rapidjson/prettywriter.h"
-
-using namespace rapidjson;
 
 using namespace xacc;
 
@@ -193,25 +184,11 @@ public:
     return false;
   }
 
-  const std::vector<double> getOneBitErrorRates() override {
-    return chosenBackend.gateErrors;
-  }
+  const std::vector<double> getOneBitErrorRates() override ;
 
   const std::vector<std::pair<std::pair<int, int>, double>>
-  getTwoBitErrorRates() override {
-    // Return list of ((q1,q2),ERROR_RATE)
-    std::vector<std::pair<std::pair<int, int>, double>> twobiter;
-    for (int i = 0; i < chosenBackend.multiQubitGates.size(); i++) {
-        auto mqg = chosenBackend.multiQubitGates[i];
-        // boost::replace_all(mqg, "CX", "");
-        mqg = std::regex_replace(mqg, std::regex("CX"),"");
-        std::vector<std::string> split;
-        split = xacc::split(mqg, '_');//boost::is_any_of("_"));
-        twobiter.push_back({{std::stoi(split[0]), std::stoi(split[1])}, chosenBackend.multiQubitGateErrors[i]});
-    }
+  getTwoBitErrorRates();
 
-    return twobiter;
-  }
   /**
    * Return the name of this instance.
    *

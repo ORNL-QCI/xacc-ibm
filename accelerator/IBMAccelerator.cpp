@@ -30,6 +30,15 @@
  **********************************************************************************/
 #include "IBMAccelerator.hpp"
 #include "OpenPulseVisitor.hpp"
+#include "OpenQasmVisitor.hpp"
+#include <cctype>
+
+#define RAPIDJSON_HAS_STDSTRING 1
+
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
+
+using namespace rapidjson;
 
 #include "XACC.hpp"
 
@@ -39,6 +48,25 @@
 namespace xacc {
 namespace quantum {
 
+ const std::vector<double> IBMAccelerator::getOneBitErrorRates() {
+    return chosenBackend.gateErrors;
+  }
+
+  const std::vector<std::pair<std::pair<int, int>, double>>
+  IBMAccelerator::getTwoBitErrorRates() {
+    // Return list of ((q1,q2),ERROR_RATE)
+    std::vector<std::pair<std::pair<int, int>, double>> twobiter;
+    for (int i = 0; i < chosenBackend.multiQubitGates.size(); i++) {
+        auto mqg = chosenBackend.multiQubitGates[i];
+        // boost::replace_all(mqg, "CX", "");
+        mqg = std::regex_replace(mqg, std::regex("CX"),"");
+        std::vector<std::string> split;
+        split = xacc::split(mqg, '_');//boost::is_any_of("_"));
+        twobiter.push_back({{std::stoi(split[0]), std::stoi(split[1])}, chosenBackend.multiQubitGateErrors[i]});
+    }
+
+    return twobiter;
+  }
 std::shared_ptr<AcceleratorBuffer>
 IBMAccelerator::createBuffer(const std::string &varId) {
   if (!isValidBufferSize(30)) {
@@ -504,19 +532,12 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       std::string bitStr = itr->name.GetString();
       int nOccurrences = itr->value.GetInt();
       if (chosenBackend.isSimulator) {
-        bitStr = std::regex_replace(bitStr, std::regex("\s"), "");
-        // boost::replace_all(bitStr, " ", "");
-      } else {
-        bitStr =
-            bitStr.substr(bitStr.length() - buffer->size(), bitStr.length());
+        bitStr.erase(std::remove_if(bitStr.begin(),bitStr.end(), ::isspace), bitStr.end());
       }
-    //   boost::dynamic_bitset<> outcome(bitStr);
       std::stringstream xx;
       xx << bitStr << " " << nOccurrences << " times";
-      xacc::info("IBM Measurement outcome: " + xx.str() + ".");
-    //   for (int i = 0; i < nOccurrences; i++) {
+      xacc::info("IBM Sim Measurement outcome: " + xx.str() + ".");
       buffer->appendMeasurement(bitStr,nOccurrences);
-    //   }
     }
 
     buffer->addExtraInfo(
@@ -582,9 +603,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
         int nOccurrences = itr->value.GetInt();
 
         if (chosenBackend.isSimulator) {
-          bitStr = std::regex_replace(bitStr, std::regex("\s"), "");
-
-          // xacc::info("BITSTR BEFORE: " + bitStr);
+          bitStr.erase(std::remove_if(bitStr.begin(),bitStr.end(), ::isspace), bitStr.end());
           if (bitStr.length() < buffer->size()) {
             std::string bitString = "";
             for (int i = 0; i < buffer->size(); ++i)
@@ -742,7 +761,7 @@ void IBMAccelerator::findApiKeyInFile(std::string &apiKey, std::string &url,
       apiKey = key;
     } else if (l.find("url") != std::string::npos) {
       std::vector<std::string> split;
-      xacc::split(l, ':');
+      split = xacc::split(l, ':');
       auto key = split[1] + ":" + split[2];
       xacc::trim(key);
       url = key;
