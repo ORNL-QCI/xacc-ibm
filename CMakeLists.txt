@@ -42,7 +42,7 @@ endif()
 if(IBM_BUILD_TESTS)
    include_directories(${CMAKE_SOURCE_DIR}/accelerator)
    include_directories(${CMAKE_SOURCE_DIR}/utils)
-   add_subdirectory(examples)
+   #add_subdirectory(examples)
    add_subdirectory(tests)
 endif()
 

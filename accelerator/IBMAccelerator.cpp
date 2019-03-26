@@ -33,6 +33,7 @@
 
 #include "XACC.hpp"
 
+#include <regex>
 #include <thread>
 
 namespace xacc {
@@ -127,7 +128,7 @@ void IBMAccelerator::initialize() {
     auto response = handleExceptionRestClientPost(
         url, "/api/users/loginWithToken", tokenParam, headers);
 
-    if (boost::contains(response, "error")) {
+    if (response.find("error") != std::string::npos) {
       xacc::error("Error received from IBM\n" + response);
     }
 
@@ -150,7 +151,7 @@ void IBMAccelerator::initialize() {
       backend.name = b["name"].GetString();
       backend.description =
           b.HasMember("description") ? b["description"].GetString() : "";
-      backend.status = !boost::contains(b["status"].GetString(), "off");
+      backend.status = !(std::string(b["status"].GetString()).find("off") != std::string::npos);
 
       backend.isSimulator = b["simulator"].GetBool();
       if (!backend.isSimulator && b.HasMember("couplingMap") &&
@@ -375,7 +376,7 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
       jsonStr += expStr + ",";
     } else {
       auto qasmStr = visitor->getNativeAssembly();
-      boost::replace_all(qasmStr, "\n", "\\n");
+      qasmStr = std::regex_replace(qasmStr, std::regex("\n"), "\\n");
       jsonStr += "{\"qasm\": \"" + qasmStr + "\"},";
     }
     kernelNames.push_back(kernel->name());
@@ -436,7 +437,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
                                 const std::string &response) {
 
   // xacc::info("POST RESPONSE\n" + response);
-  if (boost::contains(response, "error")) {
+  if (response.find("error") != std::string::npos){
     xacc::error(response);
   }
   Document d;
@@ -457,11 +458,11 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
     getResponse = handleExceptionRestClientGet(url, getPath);
 
     // Search the result for the status : COMPLETED indicator
-    if (boost::contains(getResponse, "COMPLETED")) {
+    if (getResponse.find("COMPLETED") != std::string::npos) { //boost::contains(getResponse, "COMPLETED")) {
       jobCompleted = true;
     }
 
-    if (boost::contains(getResponse, "ERROR_RUNNING_JOB")) {
+    if (getResponse.find("ERROR_RUNNING_JOB") != std::string::npos) {//boost::contains(getResponse, "ERROR_RUNNING_JOB")) {
         xacc::info(getResponse);
         xacc::error("Error encountered running IBM job.");
     }
@@ -503,7 +504,8 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
       std::string bitStr = itr->name.GetString();
       int nOccurrences = itr->value.GetInt();
       if (chosenBackend.isSimulator) {
-        boost::replace_all(bitStr, " ", "");
+        bitStr = std::regex_replace(bitStr, std::regex("\s"), "");
+        // boost::replace_all(bitStr, " ", "");
       } else {
         bitStr =
             bitStr.substr(bitStr.length() - buffer->size(), bitStr.length());
@@ -580,7 +582,7 @@ IBMAccelerator::processResponse(std::shared_ptr<AcceleratorBuffer> buffer,
         int nOccurrences = itr->value.GetInt();
 
         if (chosenBackend.isSimulator) {
-          boost::replace_all(bitStr, " ", "");
+          bitStr = std::regex_replace(bitStr, std::regex("\s"), "");
 
           // xacc::info("BITSTR BEFORE: " + bitStr);
           if (bitStr.length() < buffer->size()) {
@@ -682,13 +684,12 @@ void IBMAccelerator::searchAPIKey(std::string &key, std::string &url,
 
   // Search for the API Key in $HOME/.ibm_config,
   // $IBM_CONFIG, or in the command line argument --ibm-api-key
-  boost::filesystem::path ibmConfig(std::string(getenv("HOME")) +
+  std::string ibmConfig(std::string(getenv("HOME")) +
                                     "/.ibm_config");
-
-  if (boost::filesystem::exists(ibmConfig)) {
+  if (xacc::fileExists(ibmConfig)) {
     findApiKeyInFile(key, url, hub, group, project, ibmConfig);
   } else if (const char *nonStandardPath = getenv("IBM_CONFIG")) {
-    boost::filesystem::path nonStandardIbmConfig(nonStandardPath);
+    std::string nonStandardIbmConfig(nonStandardPath);
     findApiKeyInFile(key, url, hub, group, project, nonStandardIbmConfig);
   } else {
 
@@ -726,43 +727,42 @@ void IBMAccelerator::searchAPIKey(std::string &key, std::string &url,
 void IBMAccelerator::findApiKeyInFile(std::string &apiKey, std::string &url,
                                       std::string &hub, std::string &group,
                                       std::string &project,
-                                      boost::filesystem::path &p) {
-  std::ifstream stream(p.string());
+                                      const std::string &path) {
+  std::ifstream stream(path);
   std::string contents((std::istreambuf_iterator<char>(stream)),
                        std::istreambuf_iterator<char>());
 
   std::vector<std::string> lines;
-  boost::split(lines, contents, boost::is_any_of("\n"));
+  lines = xacc::split(contents, '\n');
   for (auto l : lines) {
-    if (boost::contains(l, "key")) {
-      std::vector<std::string> split;
-      boost::split(split, l, boost::is_any_of(":"));
+    if (l.find("key") != std::string::npos) {
+      std::vector<std::string> split = xacc::split(l, ':');
       auto key = split[1];
-      boost::trim(key);
+      xacc::trim(key);
       apiKey = key;
-    } else if (boost::contains(l, "url")) {
+    } else if (l.find("url") != std::string::npos) {
       std::vector<std::string> split;
-      boost::split(split, l, boost::is_any_of(":"));
+      xacc::split(l, ':');
       auto key = split[1] + ":" + split[2];
-      boost::trim(key);
+      xacc::trim(key);
       url = key;
-    } else if (boost::contains(l, "hub")) {
+    } else if (l.find("hub") != std::string::npos) {
       std::vector<std::string> split;
-      boost::split(split, l, boost::is_any_of(":"));
+      split = xacc::split(l, ':');
       auto _hub = split[1];
-      boost::trim(_hub);
+      xacc::trim(_hub);
       hub = _hub;
-    } else if (boost::contains(l, "group")) {
+    } else if (l.find("group") != std::string::npos) {
       std::vector<std::string> split;
-      boost::split(split, l, boost::is_any_of(":"));
+      split = xacc::split(l, ':');
       auto _group = split[1];
-      boost::trim(_group);
+      xacc::trim(_group);
       group = _group;
-    } else if (boost::contains(l, "project")) {
+    } else if (l.find("project") != std::string::npos) {
       std::vector<std::string> split;
-      boost::split(split, l, boost::is_any_of(":"));
+      split = xacc::split(l, ':');
       auto _project = split[1];
-      boost::trim(_project);
+      xacc::trim(_project);
       project = _project;
     }
   }

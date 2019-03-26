@@ -36,8 +36,6 @@
 #include "OpenQasmVisitor.hpp"
 #include "RemoteAccelerator.hpp"
 #include "RuntimeOptions.hpp"
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 
 #define RAPIDJSON_HAS_STDSTRING 1
 
@@ -205,9 +203,10 @@ public:
     std::vector<std::pair<std::pair<int, int>, double>> twobiter;
     for (int i = 0; i < chosenBackend.multiQubitGates.size(); i++) {
         auto mqg = chosenBackend.multiQubitGates[i];
-        boost::replace_all(mqg, "CX", "");
+        // boost::replace_all(mqg, "CX", "");
+        mqg = std::regex_replace(mqg, std::regex("CX"),"");
         std::vector<std::string> split;
-        boost::split(split, mqg, boost::is_any_of("_"));
+        split = xacc::split(mqg, '_');//boost::is_any_of("_"));
         twobiter.push_back({{std::stoi(split[0]), std::stoi(split[1])}, chosenBackend.multiQubitGateErrors[i]});
     }
 
@@ -273,7 +272,7 @@ private:
    */
   void findApiKeyInFile(std::string &key, std::string &url, std::string &hub,
                         std::string &group, std::string &project,
-                        boost::filesystem::path &p);
+                        const std::string &p);
 
   /**
    * Reference to the temporary API Token for
