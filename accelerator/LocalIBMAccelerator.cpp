@@ -32,7 +32,7 @@
 #include "XACC.hpp"
 #include "json.hpp"
 #include "simulator.hpp"
-
+#include <regex>
 // for convenience
 using json = nlohmann::json;
 
