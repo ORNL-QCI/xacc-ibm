@@ -1,4 +1,5 @@
 #include "IBMIRTransformation.hpp"
+#include "xacc_service.hpp"
 
 namespace xacc {
 namespace quantum {

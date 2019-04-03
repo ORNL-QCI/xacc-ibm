@@ -34,6 +34,7 @@
 #include "IR.hpp"
 #include "IRProvider.hpp"
 #include "XACC.hpp"
+#include "xacc_service.hpp"
 
 #include "OQASM2BaseListener.h"
 #include "OQASMToXACCListener.hpp"
@@ -132,7 +133,7 @@ void OQASMToXACCListener::exitUserDefGate(
   std::string gateName = ctx->gatename()->id()->getText();
 
   gateName[0] = static_cast<char>(toupper(gateName[0]));
-  
+
   std::vector<int> qubits;
 
   for (int i = 0; i < ctx->gatearglist()->gatearg().size(); i++) {
@@ -168,7 +169,7 @@ void OQASMToXACCListener::exitUserDefGate(
   } else {
     instruction = gateRegistry->createInstruction(gateName, qubits);
   }
-  
+
   if (ctx->explist() != nullptr) {
     for (int i = 0; i < ctx->explist()->exp().size(); i++) {
       param =

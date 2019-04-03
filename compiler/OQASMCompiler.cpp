@@ -30,6 +30,7 @@
  **********************************************************************************/
 #include "IRProvider.hpp"
 #include "XACC.hpp"
+#include "xacc_service.hpp"
 
 #include "OpenQasmVisitor.hpp"
 

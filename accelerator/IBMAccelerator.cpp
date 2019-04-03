@@ -134,7 +134,6 @@ IBMAccelerator::getIRTransformations() {
 void IBMAccelerator::initialize() {
   if (!initialized) {
     std::string jsonStr = "", apiKey = "";
-    auto options = RuntimeOptions::instance();
     searchAPIKey(apiKey, url, hub, group, project);
 
     std::string getBackendPath = "/api/Backends?access_token=";
@@ -299,7 +298,6 @@ IBMAccelerator::processInput(std::shared_ptr<AcceleratorBuffer> buffer,
 
   // Get the runtime options map, and initialize
   // some basic variables we are going to need
-  auto options = RuntimeOptions::instance();
   std::string backendName = "ibmq_qasm_simulator";
   std::string shots = "1024";
   std::map<std::string, std::string> headers;

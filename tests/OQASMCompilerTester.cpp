@@ -32,6 +32,7 @@
 #include "XACC.hpp"
 #include "CountGatesOfTypeVisitor.hpp"
 #include "AllGateVisitor.hpp"
+#include "xacc_service.hpp"
 
 using namespace xacc;
 
