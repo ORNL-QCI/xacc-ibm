@@ -33,7 +33,6 @@
 
 #include <memory>
 #include "AllGateVisitor.hpp"
-#include <boost/math/constants/constants.hpp>
 
 namespace xacc {
 namespace quantum {
@@ -48,7 +47,7 @@ namespace quantum {
 class OpenQasmVisitor: public AllGateVisitor {
 protected:
 
-	constexpr static double pi = boost::math::constants::pi<double>();
+	constexpr static double pi = 3.1415926;
 
 	/**
 	 * Reference to the classical memory address indices
@@ -64,7 +63,7 @@ protected:
 
 
     std::string operationsJsonStr = "[";
-        
+
 public:
 
 	virtual const std::string name() const {
@@ -123,7 +122,7 @@ public:
         js << "{\"name\":\"cx\",\"params\": [],\"qubits\":[" << cn.bits()[0]<< ", " << cn.bits()[1] << "]},";
         operationsJsonStr += js.str();
 	}
-    
+
 	/**
 	 * Visit X gates
 	 */

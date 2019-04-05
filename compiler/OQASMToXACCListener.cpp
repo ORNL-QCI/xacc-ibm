@@ -29,7 +29,6 @@
  *
  **********************************************************************************/
 #include "exprtk.hpp"
-#include <boost/math/constants/constants.hpp>
 
 #include "IR.hpp"
 #include "IRProvider.hpp"
@@ -48,7 +47,7 @@ namespace xacc {
 
 namespace quantum {
 
-constexpr static double pi = boost::math::constants::pi<double>();
+constexpr static double pi = 3.1415926;
 
 OQASMToXACCListener::OQASMToXACCListener(std::shared_ptr<xacc::IR> ir)
     : ir(ir) {

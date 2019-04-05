@@ -1,9 +1,5 @@
 /***********************************************************************************
-<<<<<<< HEAD
  * Copyright (c) 2018, UT-Battelle
-=======
- * Copyright (c) 2017, UT-Battelle
->>>>>>> a6245fd4f1404be93f9b04ddf420d5736d842c66
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +33,6 @@
 
 #include <memory>
 #include "AllGateVisitor.hpp"
-#include <boost/math/constants/constants.hpp>
 
 namespace xacc {
 namespace quantum {
@@ -47,7 +42,7 @@ namespace quantum {
 class OpenPulseVisitor: public AllGateVisitor {
 protected:
 
-	constexpr static double pi = boost::math::constants::pi<double>();
+	constexpr static double pi = 3.1415926;
     std::string instructions = "";
 public:
 
@@ -89,7 +84,7 @@ public:
 	void visit(CNOT& cn) override {
         xacc::error("digital 2 analog not supported for CNOT yet.");
 	}
-    
+
 	/**
 	 * Visit X gates
 	 */
@@ -115,7 +110,7 @@ public:
         xacc::error("digital 2 analog not supported for u yet.");
     }
 	/**
-    
+
 	 * Visit Measurement gates
 	 */
 	void visit(Measure& m) override {
@@ -159,7 +154,7 @@ public:
         return native.substr(0,native.length()-1) + "]}";
     }
     // append to pulse library function
-    
+
 	/**
 	 * The destructor
 	 */
